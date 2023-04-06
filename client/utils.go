@@ -1,8 +1,8 @@
 package client
 
 import (
-	"DDOS_ARMY/camp"
 	"fmt"
+	"github.com/XORbit01/DDOS-ARMY/camp"
 	"github.com/fatih/color"
 	"os"
 	"strings"

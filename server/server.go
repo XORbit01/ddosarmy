@@ -1,11 +1,11 @@
 package server
 
 import (
-	"DDOS_ARMY/camp"
 	"container/list"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"github.com/XORbit01/DDOS-ARMY/camp"
 	"github.com/fatih/color"
 	"io"
 	"log"

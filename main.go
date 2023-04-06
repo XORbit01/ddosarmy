@@ -1,11 +1,11 @@
 package main
 
 import (
-	"DDOS_ARMY/camp"
-	"DDOS_ARMY/client"
-	"DDOS_ARMY/server"
 	"flag"
 	"fmt"
+	"github.com/XORbit01/DDOS-ARMY/camp"
+	"github.com/XORbit01/DDOS-ARMY/client"
+	"github.com/XORbit01/DDOS-ARMY/server"
 	"github.com/fatih/color"
 	"net/http"
 	"os"
