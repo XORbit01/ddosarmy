@@ -5,3 +5,5 @@ build:
 run:
 	./bin/ddosarmy
 
+test :
+	go test -v ./...
