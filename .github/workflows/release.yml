@@ -16,7 +16,6 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
       - name: Log GITHUB_TOKEN env variable
-        run: echo "GITHUB_TOKEN is set to ${{ secrets.RELEASE_TOKEN }}"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:
