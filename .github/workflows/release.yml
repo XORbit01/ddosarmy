@@ -9,6 +9,8 @@ permissions:
   contents: write
   # packages: write
   # issues: write
+env:
+    GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
 jobs:
   goreleaser:
@@ -29,5 +31,3 @@ jobs:
           distribution: goreleaser
           version: latest
           args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
