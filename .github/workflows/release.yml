@@ -9,8 +9,6 @@ permissions:
   contents: write
   # packages: write
   # issues: write
-env:
-    GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
 jobs:
   goreleaser:
@@ -19,15 +17,16 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
       - run: git fetch --force --tags
       - uses: actions/setup-go@v4
         with:
           go-version: stable
-      - name: Log GITHUB_TOKEN env variable
-        run: echo "GITHUB_TOKEN is set to ${{ secrets.TOKEN }}"
 
       - uses: goreleaser/goreleaser-action@v4
         with:
           distribution: goreleaser
           version: latest
           args: release --clean
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
