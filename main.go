@@ -179,4 +179,5 @@ func main() {
 			color.Green("Order sent Successfully: " + order)
 		}
 	}
+	fmt.Println("Done")
 }
