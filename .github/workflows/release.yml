@@ -11,16 +11,13 @@ jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      -
-        name: Set up Go
-        uses: actions/setup-go@v3
-      -
-        name: Run GoReleaser
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+      - name: Log GITHUB_TOKEN env variable
+        run: echo "GITHUB_TOKEN is set to ${{ secrets.RELEASE_TOKEN }}"
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:
           distribution: goreleaser
