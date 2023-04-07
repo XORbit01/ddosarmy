@@ -2,42 +2,32 @@ name: goreleaser
 
 on:
   push:
-  pull_request:
+    # run only against tags
+    tags:
+      - '*'
 
 permissions:
   contents: write
+  # packages: write
+  # issues: write
 
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@v2
+      - run: git fetch --force --tags
+      - uses: actions/setup-go@v4
         with:
           go-version: stable
 
-      - name: Build and release
-        uses: goreleaser/goreleaser-action@v2
+      - uses: goreleaser/goreleaser-action@v4
         with:
+          distribution: goreleaser
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create tag
-        if: success()
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            Changes in this release:
-            - ...
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
