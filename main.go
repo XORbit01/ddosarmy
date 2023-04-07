@@ -177,7 +177,6 @@ func main() {
 				os.Exit(1)
 			}
 			color.Green("Order sent Successfully: " + order)
-
 		}
 	}
 }
