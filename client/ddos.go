@@ -19,7 +19,10 @@ func TcpSynFlood(target string, stop chan bool) {
 				conn, err := net.Dial("tcp", target)
 
 				if err == nil {
-					conn.Close()
+					err := conn.Close()
+					if err != nil {
+						return
+					}
 				}
 				if err != nil {
 					fmt.Println("Error:", err)
