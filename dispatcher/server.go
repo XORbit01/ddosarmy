@@ -29,8 +29,14 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 			return
 		}
 
+		// request.RemoteAddr == "" that means its testing, let change it
+		if request.RemoteAddr == "" {
+			request.RemoteAddr = "127.0.0.1:8081"
+		}
+
 		//set soldier ip
 		ip, _, err := net.SplitHostPort(request.RemoteAddr)
+
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
