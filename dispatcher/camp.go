@@ -11,8 +11,8 @@ type Soldier struct {
 }
 
 const (
-	STATUS_ATTACKING = "attacking"
-	STATUS_STOPPED   = "stopped"
+	StatusAttacking = "attacking"
+	StatusStopped   = "stopped"
 )
 
 type Camp struct {

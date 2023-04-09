@@ -33,7 +33,7 @@ func (d *Dispatcher) SetupDefault() {
 	d.ListeningAddress = "localhost"
 	d.ListeningPort = "8080"
 	d.cmp.Leader.Name = "leader"
-	d.cmp.Status = STATUS_STOPPED
+	d.cmp.Status = StatusStopped
 	d.cmp.Leader.AuthenticationHash = HashOf("password")
 	d.cmp.Soldiers = make([]Soldier, 0)
 }

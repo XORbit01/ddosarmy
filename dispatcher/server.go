@@ -80,7 +80,7 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 				return
 			}
 			status := string(data)
-			if status == STATUS_ATTACKING || status == STATUS_STOPPED {
+			if status == StatusAttacking || status == StatusStopped {
 				d.cmp.Status = status
 				writer.WriteHeader(http.StatusOK)
 			} else {

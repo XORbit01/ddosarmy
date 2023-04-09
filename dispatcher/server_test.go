@@ -111,7 +111,7 @@ func TestHandleCampUpdateStatus(t *testing.T) {
 	d.SetupDefault()
 
 	// add password to header
-	req, err := http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(STATUS_ATTACKING)))
+	req, err := http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(StatusAttacking)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,13 +127,13 @@ func TestHandleCampUpdateStatus(t *testing.T) {
 		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	if d.cmp.Status != STATUS_ATTACKING {
-		t.Errorf("camp status not changed got %v want %v", d.cmp.Status, STATUS_ATTACKING)
+	if d.cmp.Status != StatusAttacking {
+		t.Errorf("camp status not changed got %v want %v", d.cmp.Status, StatusAttacking)
 	}
 
 	// wrong test
 	// add wrong password to header
-	req, err = http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(STATUS_STOPPED)))
+	req, err = http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(StatusStopped)))
 	if err != nil {
 		t.Fatal(err)
 	}
