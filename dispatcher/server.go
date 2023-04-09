@@ -2,14 +2,13 @@ package dispatcher
 
 import (
 	"encoding/json"
-	"io"
 	"net"
 	"net/http"
 )
 
 func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher) {
 	if request.Method == "GET" {
-		err := json.NewEncoder(writer).Encode(d.cmp)
+		err := json.NewEncoder(writer).Encode(d.Cmp)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
@@ -25,7 +24,7 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 			return
 		}
 
-		if d.cmp.SoldierExists(soldier.Name) {
+		if d.Cmp.SoldierExists(soldier.Name) {
 			http.Error(writer, "Soldier already exists", http.StatusBadRequest)
 			return
 		}
@@ -37,32 +36,32 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 			return
 		}
 		soldier.Ip = ip
-		d.cmp.AddSoldier(soldier)
+		d.Cmp.AddSoldier(soldier)
 		writer.WriteHeader(http.StatusOK)
 	}
 	if request.Method == "DELETE" {
 		auth := request.Header.Get("Authorization")
 
-		if isAuthorized(auth, d.cmp.Leader.AuthenticationHash) {
+		if isAuthorized(auth, d.Cmp.Leader.AuthenticationHash) {
 			//remove soldier from camp
-			data, err := io.ReadAll(request.Body)
-			if err != nil {
-				http.Error(writer, err.Error(), http.StatusBadRequest)
-				return
-			}
-			soldierName := string(data)
-
+			var soldier Soldier
+			err := json.NewDecoder(request.Body).Decode(&soldier)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusBadRequest)
 				return
 			}
 
-			if !d.cmp.SoldierExists(soldierName) {
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			if !d.Cmp.SoldierExists(soldier.Name) {
 				http.Error(writer, "Soldier does not exist", http.StatusNotFound)
 				return
 			}
 
-			d.cmp.RemoveSoldier(soldierName)
+			d.Cmp.RemoveSoldier(soldier.Name)
 			writer.WriteHeader(http.StatusOK)
 
 		} else {
@@ -73,7 +72,7 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 
 	// update camp status
 	if request.Method == "PUT" {
-		if isAuthorized(request.Header.Get("Authorization"), d.cmp.Leader.AuthenticationHash) {
+		if isAuthorized(request.Header.Get("Authorization"), d.Cmp.Leader.AuthenticationHash) {
 			var cp CampSettings
 			err := json.NewDecoder(request.Body).Decode(&cp)
 			if err != nil {
@@ -95,7 +94,7 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 					return
 				}
 			}
-			d.cmp.UpdateSettings(cp.Status, cp.VictimServer, cp.DDOSType)
+			d.Cmp.UpdateSettings(cp.Status, cp.VictimServer, cp.DDOSType)
 			writer.WriteHeader(http.StatusOK)
 
 		} else {

@@ -10,7 +10,7 @@ type Dispatcher struct {
 	ListeningAddress string
 	ListeningPort    string
 
-	cmp Camp
+	Cmp Camp
 }
 
 var instance *Dispatcher
@@ -32,12 +32,12 @@ func HashOf(password string) string {
 func (d *Dispatcher) SetupDefault() {
 	d.ListeningAddress = "localhost"
 	d.ListeningPort = "8080"
-	d.cmp.Leader.Name = "leader"
-	d.cmp.Leader.AuthenticationHash = HashOf("password")
-	d.cmp.Settings.Status = StatusStopped
-	d.cmp.Settings.VictimServer = "127.0.0.1:8080"
-	d.cmp.Settings.DDOSType = DDOSTypeICMP
-	d.cmp.Soldiers = make([]Soldier, 0)
+	d.Cmp.Leader.Name = "leader"
+	d.Cmp.Leader.AuthenticationHash = HashOf("password")
+	d.Cmp.Settings.Status = StatusStopped
+	d.Cmp.Settings.VictimServer = "127.0.0.1:8080"
+	d.Cmp.Settings.DDOSType = DDOSTypeICMP
+	d.Cmp.Soldiers = make([]Soldier, 0)
 }
 
 func (c *Camp) UpdateSettings(status, victim, ddosType string) {

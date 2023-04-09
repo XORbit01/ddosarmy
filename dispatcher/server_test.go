@@ -48,11 +48,11 @@ func TestHandleCampPOSTSoldier(t *testing.T) {
 	}
 
 	// now check if the soldier name in d.camp.Soldiers is "soldier"
-	if len(d.cmp.Soldiers) != 1 {
-		t.Errorf("POST /camp returned wrong status code: got %v want %v", len(d.cmp.Soldiers), 1)
+	if len(d.Cmp.Soldiers) != 1 {
+		t.Errorf("POST /camp returned wrong status code: got %v want %v", len(d.Cmp.Soldiers), 1)
 	}
-	if d.cmp.Soldiers[0].Name != "soldier" {
-		t.Errorf("POST /camp returned wrong status code: got %v want %v", d.cmp.Soldiers[0].Name, "soldier")
+	if d.Cmp.Soldiers[0].Name != "soldier" {
+		t.Errorf("POST /camp returned wrong status code: got %v want %v", d.Cmp.Soldiers[0].Name, "soldier")
 	}
 }
 
@@ -60,7 +60,7 @@ func TestHandleCampDELETESoldierUnAuthorized(t *testing.T) {
 	d := NewDispatcher()
 	d.SetupDefault()
 
-	d.cmp.AddSoldier(Soldier{Name: "soldierName"})
+	d.Cmp.AddSoldier(Soldier{Name: "soldierName"})
 	// add password to header
 	req, err := http.NewRequest("DELETE", "/camp", bytes.NewReader([]byte("soldierName")))
 	if err != nil {
@@ -84,7 +84,7 @@ func TestHandleCampDELETESoldierAuthorized(t *testing.T) {
 	d := NewDispatcher()
 	d.SetupDefault()
 
-	d.cmp.AddSoldier(Soldier{Name: "soldierName"})
+	d.Cmp.AddSoldier(Soldier{Name: "soldierName"})
 	// add password to header
 	req, err := http.NewRequest("DELETE", "/camp", bytes.NewReader([]byte("soldierName")))
 	if err != nil {
@@ -101,8 +101,8 @@ func TestHandleCampDELETESoldierAuthorized(t *testing.T) {
 	if status := rec.Code; status != http.StatusOK {
 		t.Errorf("DELETE /camp returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
-	if len(d.cmp.Soldiers) != 0 {
-		t.Errorf("camp soldiers not changed got %v want %v", len(d.cmp.Soldiers), 0)
+	if len(d.Cmp.Soldiers) != 0 {
+		t.Errorf("camp soldiers not changed got %v want %v", len(d.Cmp.Soldiers), 0)
 	}
 }
 
@@ -128,8 +128,8 @@ func TestHandleCampUpdateStatus(t *testing.T) {
 		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	if d.cmp.Settings.Status != StatusAttacking {
-		t.Errorf("camp status not changed got %v want %v", d.cmp.Settings.Status, StatusAttacking)
+	if d.Cmp.Settings.Status != StatusAttacking {
+		t.Errorf("camp status not changed got %v want %v", d.Cmp.Settings.Status, StatusAttacking)
 	}
 
 	// wrong test
@@ -173,8 +173,8 @@ func TestHandleCampUpdateDDOSType(t *testing.T) {
 		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	if d.cmp.Settings.DDOSType != DDOSTypeACK {
-		t.Errorf("camp ddos type not changed got %v want %v", d.cmp.Settings.DDOSType, DDOSTypeACK)
+	if d.Cmp.Settings.DDOSType != DDOSTypeACK {
+		t.Errorf("camp ddos type not changed got %v want %v", d.Cmp.Settings.DDOSType, DDOSTypeACK)
 	}
 
 	// wrong test
@@ -217,8 +217,8 @@ func TestHandleCampUpdateVictimTarget(t *testing.T) {
 		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
-	if d.cmp.Settings.VictimServer != "127.0.0.2:80" {
-		t.Errorf("camp ddos type not changed got %v want %v", d.cmp.Settings.VictimServer, "127.0.0.2:80")
+	if d.Cmp.Settings.VictimServer != "127.0.0.2:80" {
+		t.Errorf("camp ddos type not changed got %v want %v", d.Cmp.Settings.VictimServer, "127.0.0.2:80")
 	}
 
 	// wrong test
