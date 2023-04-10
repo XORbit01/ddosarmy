@@ -6,6 +6,7 @@ type LeaderAPI struct {
 
 type SoldierAPI struct {
 	Name string `json:"name"`
+	Ip   string `json:"ip"`
 }
 
 type CampSettings struct {
