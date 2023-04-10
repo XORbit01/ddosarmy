@@ -15,9 +15,9 @@ const (
 	StatusStopped   = "stopped"
 )
 const (
-	DDOSTypeICMP = "icmp"
-	DDOSTypeSYN  = "syn"
-	DDOSTypeACK  = "ack"
+	DDOSTypeICMP = "ICMP"
+	DDOSTypeSYN  = "SYN"
+	DDOSTypeACK  = "ACK"
 )
 
 type CampSettings struct {

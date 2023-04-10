@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"encoding/json"
+	"github.com/fatih/color"
 	"net"
 	"net/http"
 )
@@ -121,5 +122,9 @@ func Start(d *Dispatcher) {
 	http.HandleFunc("/camp", func(writer http.ResponseWriter, request *http.Request) {
 		HandleCamp(writer, request, d)
 	})
-	_ = http.ListenAndServe(d.ListeningAddress+":"+d.ListeningPort, nil)
+	color.Green("Starting dispatcher server on %s:%s", d.ListeningAddress, d.ListeningPort)
+	err := http.ListenAndServe(d.ListeningAddress+":"+d.ListeningPort, nil)
+	if err != nil {
+		color.Red("Error starting dispatcher server: %s", err.Error())
+	}
 }

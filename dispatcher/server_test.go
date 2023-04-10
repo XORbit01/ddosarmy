@@ -86,7 +86,7 @@ func TestHandleCampDELETESoldierAuthorized(t *testing.T) {
 
 	d.Cmp.AddSoldier(Soldier{Name: "soldierName"})
 	// add password to header
-	req, err := http.NewRequest("DELETE", "/camp", bytes.NewReader([]byte("soldierName")))
+	req, err := http.NewRequest("DELETE", "/camp", bytes.NewReader([]byte(`{"name":"soldierName"}`)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestHandleCampUpdateDDOSType(t *testing.T) {
 	d := NewDispatcher()
 	d.SetupDefault()
 
-	jr := `{"ddos_type":"ack"}`
+	jr := `{"ddos_type":"ACK"}`
 
 	req, err := http.NewRequest("PUT", "/camp", bytes.NewReader([]byte(jr)))
 	if err != nil {
