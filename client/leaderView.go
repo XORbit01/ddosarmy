@@ -165,7 +165,10 @@ func (v *leaderView) updateDataForLeader(data CampAPI) {
 		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{"", "", ""})
 	}
 }
-func (l *Leader) StartLeaderView(changedDataChan chan CampAPI) {
+func (v *leaderView) addLog(log string) {
+	v.Logs.Rows = append(v.Logs.Rows, log)
+}
+func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan string) {
 	v := newLeaderView()
 	v.Init()
 	defer ui.Close()
@@ -244,7 +247,12 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI) {
 				v.updateDataForLeader(data)
 				v.Render()
 			}()
-		default:
+		case log := <-logChan:
+			go func() {
+				v.addLog(log)
+				v.Render()
+			}()
+
 		}
 	}
 }

@@ -136,10 +136,10 @@ func (v *soldierView) updateDataForSoldier(data CampAPI) {
 	}
 }
 
-func (v *soldierView) AddLog(log string) {
+func (v *soldierView) addLog(log string) {
 	v.Logs.Rows = append(v.Logs.Rows, log)
 }
-func StartSoldierView(changedDataChan chan CampAPI) {
+func StartSoldierView(changedDataChan chan CampAPI, logChan chan string) {
 	v := newSoldierView()
 	v.Init()
 	defer ui.Close()
@@ -167,9 +167,9 @@ func StartSoldierView(changedDataChan chan CampAPI) {
 				v.updateDataForSoldier(data)
 				v.Render()
 			}()
-		case log := <-LogChan:
+		case log := <-logChan:
 			go func() {
-				v.AddLog(log)
+				v.addLog(log)
 				v.Render()
 			}()
 		default:
