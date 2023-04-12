@@ -26,14 +26,15 @@ in other words server is teller and soldiers are listeners.`),
 			color.Red("error getting host")
 			return
 		}
+
 		if !IsValidAddr(host) {
-			fmt.Println("invalid host format, please use ip address")
+			color.Red("invalid host format, please use ip address using -c/--connect flag")
 			return
 		}
 
 		port, err := cmd.Flags().GetInt("port")
 		if err != nil {
-			color.Red("error getting port, please check the port format")
+			color.Red("error getting port, please check the port format using -p/--port flag")
 			return
 		}
 		if !IsValidPort(port) {

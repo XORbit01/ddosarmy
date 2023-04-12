@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/fatih/color"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -9,7 +10,9 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "ddosarmy",
 	Short: "connect to a server and send a lot of requests :)",
-	Long:  `ddos army is tool aims to cluster multiple users to send a lot of requests to a victim server`,
+	Long: color.CyanString(`
+ddos army is tool aims to cluster multiple users
+to send a lot of requests to a victim server`),
 }
 
 func Execute() {
@@ -20,5 +23,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
 }

@@ -3,6 +3,7 @@ package client
 import (
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	"time"
 )
 
 type soldierView struct {
@@ -56,6 +57,12 @@ func newSoldierView() *soldierView {
 	v.ControlDash.PaddingTop = 1
 	v.ControlDash.BorderStyle.Fg = ui.ColorMagenta
 	v.ControlDash.TitleStyle.Fg = ui.ColorBlue
+
+	v.Banner = widgets.NewParagraph()
+	v.Banner.Text = ""
+	v.Banner.TextStyle = ui.NewStyle(ui.ColorCyan, ui.ColorClear, ui.ModifierBold)
+	v.Banner.BorderStyle.Fg = ui.ColorMagenta
+	v.Banner.Border = true
 
 	v.Soldiers = widgets.NewTable()
 	v.Soldiers.Title = "Soldiers"
@@ -111,7 +118,10 @@ func (v *soldierView) Init() {
 				ui.NewCol(1.0/4, v.DDOSMode),
 			),
 			ui.NewRow(0.8,
-				ui.NewCol(1.0/4, v.ControlDash),
+				ui.NewCol(1.0/4,
+					ui.NewRow(2.0/3, v.ControlDash),
+					ui.NewRow(1.0/3, v.Banner),
+				),
 				ui.NewCol(3.0/4, v.Soldiers),
 			),
 		),
@@ -120,6 +130,16 @@ func (v *soldierView) Init() {
 			ui.NewRow(1.0/2, v.TotalSpeed),
 		),
 	)
+	go func() {
+		for {
+			frames := []string{frame0, frame1, frame2, frame3, frame4}
+			for f := range frames {
+				v.Banner.Text = frames[f]
+				v.Render()
+				time.Sleep(500 * time.Millisecond)
+			}
+		}
+	}()
 }
 
 func (v *soldierView) updateDataForSoldier(data CampAPI) {
