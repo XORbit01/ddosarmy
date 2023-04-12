@@ -6,14 +6,36 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 )
+
+func HandlePing(writer http.ResponseWriter, request *http.Request) {
+	if request.Method == "GET" {
+		_, _ = writer.Write([]byte("pong"))
+	}
+}
 
 func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher) {
 	if request.Method == "GET" {
+
 		err := json.NewEncoder(writer).Encode(d.Cmp)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
+		}
+		//update soldier last request
+		ip, _, err := net.SplitHostPort(request.RemoteAddr)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+		soldier := d.Cmp.GetSoldierByIp(ip)
+		if soldier == nil {
+			//maybe its first request or its leader
+			return
+		}
+		if soldier.Name != "" {
+			soldier.LastRequest = time.Now()
 		}
 	}
 	if request.Method == "POST" {
@@ -132,11 +154,15 @@ func isAuthorized(auth string, hash string) bool {
 }
 
 func Start(d *Dispatcher) {
+	go d.ScanAndRemoveTimeOutSoldiers()
 	http.HandleFunc("/camp", func(writer http.ResponseWriter, request *http.Request) {
 		HandleCamp(writer, request, d)
 	})
 	http.HandleFunc("/system", func(writer http.ResponseWriter, request *http.Request) {
 		HandleSystem(writer, request, d)
+	})
+	http.HandleFunc("/ping", func(writer http.ResponseWriter, request *http.Request) {
+		HandlePing(writer, request)
 	})
 	color.Green("Starting dispatcher server on %s:%s", d.ListeningAddress, d.ListeningPort)
 	err := http.ListenAndServe(d.ListeningAddress+":"+d.ListeningPort, nil)

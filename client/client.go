@@ -189,7 +189,22 @@ func (c *Client) Start() {
 	}()
 	wg.Wait()
 }
-
+func (l *Leader) Shutdown() error {
+	// delete request to /system
+	rq, err := http.NewRequest("DELETE", l.DispatcherServer+"/system", nil)
+	if err != nil {
+		return err
+	}
+	rq.Header.Set("Authorization", l.Password)
+	do, err := l.Do(rq)
+	if err != nil {
+		return err
+	}
+	if do.StatusCode == http.StatusOK {
+		return nil
+	}
+	return errors.New("error in shutting down")
+}
 func (l *Leader) ListenChangeView(changedDataChan chan CampAPI) {
 	prevCamp := l.GetCamp()
 	changedDataChan <- prevCamp
@@ -206,7 +221,6 @@ func (l *Leader) ListenChangeView(changedDataChan chan CampAPI) {
 	}
 }
 func (l *Leader) Start() {
-
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -214,7 +228,10 @@ func (l *Leader) Start() {
 				os.Exit(0)
 			}
 		}()
-		l.GetCamp()
+		err := l.Ping()
+		if err != nil {
+			panic(err)
+		}
 	}()
 
 	var changedDataChan = make(chan CampAPI, 1)
@@ -232,19 +249,17 @@ func (l *Leader) Start() {
 	}()
 	wg.Wait()
 }
-func (l *Leader) Shutdown() error {
-	// delete request to /system
-	rq, err := http.NewRequest("DELETE", l.DispatcherServer+"/system", nil)
+func (c *Client) Ping() error {
+	rq, err := http.NewRequest("GET", c.DispatcherServer+"/ping", nil)
 	if err != nil {
 		return err
 	}
-	rq.Header.Set("Authorization", l.Password)
-	do, err := l.Do(rq)
+	do, err := c.Do(rq)
 	if err != nil {
 		return err
 	}
 	if do.StatusCode == http.StatusOK {
 		return nil
 	}
-	return errors.New("error in shutting down")
+	return errors.New("error in pinging")
 }

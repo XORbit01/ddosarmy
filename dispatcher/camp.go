@@ -1,13 +1,16 @@
 package dispatcher
 
+import "time"
+
 type Leader struct {
 	Name               string `json:"name"`
 	AuthenticationHash string `json:"-"`
 }
 
 type Soldier struct {
-	Name string `json:"name"`
-	Ip   string `json:"ip"`
+	Name        string    `json:"name"`
+	Ip          string    `json:"ip"`
+	LastRequest time.Time `json:"last_request"`
 }
 
 const (
@@ -43,22 +46,22 @@ func (c *Camp) RemoveSoldier(name string) {
 		}
 	}
 }
-func (c *Camp) GetSoldierByName(name string) Soldier {
-	for _, soldier := range c.Soldiers {
+func (c *Camp) GetSoldierByName(name string) *Soldier {
+	for index, soldier := range c.Soldiers {
 		if soldier.Name == name {
-			return soldier
+			return &c.Soldiers[index]
 		}
 	}
-	return Soldier{}
+	return nil
 }
 
-func (c *Camp) GetSoldierByIp(ip string) Soldier {
-	for _, soldier := range c.Soldiers {
+func (c *Camp) GetSoldierByIp(ip string) *Soldier {
+	for index, soldier := range c.Soldiers {
 		if soldier.Ip == ip {
-			return soldier
+			return &c.Soldiers[index]
 		}
 	}
-	return Soldier{}
+	return nil
 }
 func (c *Camp) SoldierExists(name string) bool {
 	for _, soldier := range c.Soldiers {

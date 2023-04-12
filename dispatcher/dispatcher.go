@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"sync"
+	"time"
 )
 
 type Dispatcher struct {
@@ -60,5 +61,18 @@ func (c *Camp) UpdateSettings(status, victim, ddosType string) {
 	}
 	if ddosType != "" {
 		c.Settings.DDOSType = ddosType
+	}
+}
+func (d *Dispatcher) ScanAndRemoveTimeOutSoldiers() {
+	c := &d.Cmp
+	for {
+		for i, soldier := range c.Soldiers {
+			if soldier.LastRequest.IsZero() {
+				continue
+			}
+			if time.Now().Sub(soldier.LastRequest) > time.Second*4 {
+				c.Soldiers = append(c.Soldiers[:i], c.Soldiers[i+1:]...)
+			}
+		}
 	}
 }
