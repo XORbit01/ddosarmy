@@ -21,29 +21,75 @@ type CampAPI struct {
 	Settings CampSettings `json:"camp_settings"`
 }
 
-func (camp CampAPI) Equals(c2 CampAPI) bool {
+func compareMembers(first []SoldierAPI, second []SoldierAPI) ([]SoldierAPI, []SoldierAPI) {
+	firstMap := make(map[string]string)
+	secondMap := make(map[string]string)
+
+	// Count members in first slice
+	for _, member := range first {
+		firstMap[member.Ip] = member.Name
+	}
+
+	// Count members in second slice
+	for _, member := range second {
+		secondMap[member.Ip] = member.Name
+	}
+
+	added := make([]SoldierAPI, 0)
+	removed := make([]SoldierAPI, 0)
+
+	// Check for removed members
+	for ip, name := range firstMap {
+		if _, ok := secondMap[ip]; !ok {
+			removed = append(removed, SoldierAPI{Name: name, Ip: ip})
+		}
+	}
+
+	// Check for added members
+	for ip, name := range secondMap {
+		if _, ok := firstMap[ip]; !ok {
+			added = append(added, SoldierAPI{Name: name, Ip: ip})
+		}
+	}
+
+	return added, removed
+}
+
+func (camp CampAPI) Equals(c2 CampAPI) (yes bool, message string) {
+	message = ""
+	yes = true
 	if camp.Leader.Name != c2.Leader.Name {
-		return false
+		yes = false
+		message += "leader changed: " + c2.Leader.Name + "\n"
 	}
-	if len(camp.Soldiers) != len(c2.Soldiers) {
-		return false
-	}
-	for i, soldier := range camp.Soldiers {
-		if soldier.Name != c2.Soldiers[i].Name {
-			return false
+	// check if set of soldiers is the same if not give me the difference
+	added, removed := compareMembers(camp.Soldiers, c2.Soldiers)
+	if len(added) > 0 {
+		yes = false
+		message += "soldier left: "
+		for _, soldier := range added {
+			message += soldier.Name + "\n"
 		}
-		if soldier.Ip != c2.Soldiers[i].Ip {
-			return false
+	}
+	if len(removed) > 0 {
+		yes = false
+		message += "soldier joined: "
+		for _, soldier := range removed {
+			message += soldier.Name + "\n"
 		}
 	}
+
 	if camp.Settings.Status != c2.Settings.Status {
-		return false
+		yes = false
+		message += "+" + c2.Settings.Status + "\n"
 	}
 	if camp.Settings.VictimServer != c2.Settings.VictimServer {
-		return false
+		yes = false
+		message += "victim changed: " + c2.Settings.VictimServer + "\n"
 	}
 	if camp.Settings.DDOSType != c2.Settings.DDOSType {
-		return false
+		yes = false
+		message += "ddos type changed: " + c2.Settings.DDOSType + "\n"
 	}
-	return true
+	return yes, message
 }

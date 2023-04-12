@@ -32,57 +32,6 @@ func (l *Leader) Shutdown() error {
 	}
 	return errors.New("error in shutting down")
 }
-func (l *Leader) ListenChangeView(changedDataChan chan CampAPI) {
-	defer func() {
-		if r := recover(); r != nil {
-
-			color.Red("Dispatcher server is stopped")
-			os.Exit(0)
-		}
-	}()
-	prevCamp := l.GetCamp()
-	changedDataChan <- prevCamp
-	for {
-		camp := l.GetCamp()
-		if !camp.Equals(prevCamp) {
-			select {
-			case <-changedDataChan:
-			default:
-			}
-			changedDataChan <- camp
-		}
-		time.Sleep(1 * time.Second)
-	}
-}
-func (l *Leader) Start() {
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				color.Red("Dispatcher server is not running")
-				os.Exit(0)
-			}
-		}()
-		err := l.Ping()
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	var changedDataChan = make(chan CampAPI, 1)
-	logChan := make(chan string, 10)
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
-		l.ListenChangeView(changedDataChan)
-		wg.Done()
-	}()
-	go func() {
-		l.StartLeaderView(changedDataChan, logChan)
-		wg.Done()
-	}()
-	wg.Wait()
-}
 func (l *Leader) RemoveFromCamp(password string) error {
 	//delete request to dispatcher server /camp/
 	//with body {name: c.Name}
@@ -106,7 +55,6 @@ func (l *Leader) RemoveFromCamp(password string) error {
 		return errors.New(msg)
 	}
 }
-
 func (l *Leader) UpdateCampSettings(settings CampSettings) error {
 	//put request to dispatcher server /camp/
 	//convert settings to json and put it in the body
@@ -133,4 +81,58 @@ func (l *Leader) UpdateCampSettings(settings CampSettings) error {
 		_ = json.NewDecoder(do.Body).Decode(&msg)
 		return errors.New(msg)
 	}
+}
+func (l *Leader) ListenChangeView(changedDataChan chan CampAPI, logChan chan string) {
+	defer func() {
+		if r := recover(); r != nil {
+			color.Red("Dispatcher server is stopped")
+			os.Exit(0)
+		}
+	}()
+	prevCamp := l.GetCamp()
+	changedDataChan <- prevCamp
+	for {
+		camp := l.GetCamp()
+		if yes, message := camp.Equals(prevCamp); !yes {
+			select {
+			case <-changedDataChan:
+			default:
+			}
+
+			changedDataChan <- camp
+			logChan <- message
+			prevCamp = camp
+		}
+		time.Sleep(2 * time.Second)
+	}
+}
+
+func (l *Leader) Start() {
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				color.Red("Dispatcher server is not running")
+				os.Exit(0)
+			}
+		}()
+		err := l.Ping()
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	var changedDataChan = make(chan CampAPI, 1)
+	logChan := make(chan string, 10)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		l.ListenChangeView(changedDataChan, logChan)
+		wg.Done()
+	}()
+	go func() {
+		l.StartLeaderView(changedDataChan, logChan)
+		wg.Done()
+	}()
+	wg.Wait()
 }
