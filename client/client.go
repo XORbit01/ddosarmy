@@ -232,3 +232,19 @@ func (l *Leader) Start() {
 	}()
 	wg.Wait()
 }
+func (l *Leader) Shutdown() error {
+	// delete request to /system
+	rq, err := http.NewRequest("DELETE", l.DispatcherServer+"/system", nil)
+	if err != nil {
+		return err
+	}
+	rq.Header.Set("Authorization", l.Password)
+	do, err := l.Do(rq)
+	if err != nil {
+		return err
+	}
+	if do.StatusCode == http.StatusOK {
+		return nil
+	}
+	return errors.New("error in shutting down")
+}

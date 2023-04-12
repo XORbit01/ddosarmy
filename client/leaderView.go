@@ -237,6 +237,12 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 							changedDataChan <- cmp
 						}
 					}()
+				case 4:
+					// shutdown
+					err := l.Shutdown()
+					if err != nil {
+						return
+					}
 				case 5:
 					return
 				}
