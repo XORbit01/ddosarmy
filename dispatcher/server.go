@@ -5,6 +5,7 @@ import (
 	"github.com/fatih/color"
 	"net"
 	"net/http"
+	"os"
 )
 
 func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher) {
@@ -30,7 +31,6 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 			return
 		}
 
-		// request.RemoteAddr == "" that means its testing, let change it
 		if request.RemoteAddr == "" {
 			request.RemoteAddr = "127.0.0.1:8081"
 		}
@@ -111,6 +111,19 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 	}
 }
 
+func HandleSystem(writer http.ResponseWriter, request *http.Request, d *Dispatcher) {
+	//SHUTDOWN SERVER
+	if request.Method == "DELETE" {
+		auth := request.Header.Get("Authorization")
+		if isAuthorized(auth, d.Cmp.Leader.AuthenticationHash) {
+			writer.WriteHeader(http.StatusOK)
+			os.Exit(0)
+		} else {
+			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
+		}
+	}
+}
+
 func isAuthorized(auth string, hash string) bool {
 	if HashOf(auth) == hash {
 		return true
@@ -121,6 +134,9 @@ func isAuthorized(auth string, hash string) bool {
 func Start(d *Dispatcher) {
 	http.HandleFunc("/camp", func(writer http.ResponseWriter, request *http.Request) {
 		HandleCamp(writer, request, d)
+	})
+	http.HandleFunc("/system", func(writer http.ResponseWriter, request *http.Request) {
+		HandleSystem(writer, request, d)
 	})
 	color.Green("Starting dispatcher server on %s:%s", d.ListeningAddress, d.ListeningPort)
 	err := http.ListenAndServe(d.ListeningAddress+":"+d.ListeningPort, nil)
