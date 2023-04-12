@@ -86,7 +86,7 @@ func newLeaderView() *leaderView {
 	v.Logs.PaddingTop = 1
 	v.Logs.PaddingLeft = 2
 	v.Logs.TextStyle = ui.NewStyle(ui.ColorRed)
-	v.Logs.SelectedRowStyle = ui.NewStyle(ui.ColorRed)
+	v.Logs.SelectedRowStyle = ui.NewStyle(ui.ColorBlack, ui.ColorRed)
 	v.Logs.BorderStyle.Fg = ui.ColorMagenta
 	v.Logs.TitleStyle.Fg = ui.ColorBlue
 	v.TotalSpeed = widgets.NewPlot()
@@ -193,6 +193,14 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 
 			case "<Down>", "j":
 				v.ControlDash.ScrollDown()
+				v.Render()
+			//if mouse scroll down
+			case "<MouseWheelDown>", "h":
+				v.Logs.ScrollDown()
+				v.Render()
+
+			case "<MouseWheelUp>", "l":
+				v.Logs.ScrollUp()
 				v.Render()
 
 			case "<Enter>", "<Space>":
