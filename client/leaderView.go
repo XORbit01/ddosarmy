@@ -199,6 +199,7 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 				switch v.ControlDash.SelectedRow {
 				case 0:
 					go func() {
+
 						err := l.UpdateCampSettings(CampSettings{Status: "attacking"})
 						if err != nil {
 							return
@@ -226,7 +227,6 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 							}
 							cmp := l.GetCamp()
 							changedDataChan <- cmp
-
 						}
 						if prev == "SYN" {
 							err := l.UpdateCampSettings(CampSettings{DDOSType: "ICMP"})
@@ -235,6 +235,9 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 							}
 							cmp := l.GetCamp()
 							changedDataChan <- cmp
+							if cmp.Settings.DDOSType == "SYN" && !strings.Contains(cmp.Settings.VictimServer, ":") {
+								logChan <- "no port specified SYN\n, use port 80"
+							}
 						}
 					}()
 				case 4:

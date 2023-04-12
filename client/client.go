@@ -125,6 +125,14 @@ func (l *Leader) UpdateCampSettings(settings CampSettings) error {
 }
 
 func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) {
+	defer func() {
+		if r := recover(); r != nil {
+			//clear screen
+			fmt.Print("\033[H\033[2J")
+			color.Red("Dispatcher server is stopped")
+			os.Exit(0)
+		}
+	}()
 	prevCmp := c.GetCamp()
 	ChangedDataChan <- prevCmp
 	stopchan := make(chan bool, 1)
@@ -206,6 +214,13 @@ func (l *Leader) Shutdown() error {
 	return errors.New("error in shutting down")
 }
 func (l *Leader) ListenChangeView(changedDataChan chan CampAPI) {
+	defer func() {
+		if r := recover(); r != nil {
+
+			color.Red("Dispatcher server is stopped")
+			os.Exit(0)
+		}
+	}()
 	prevCamp := l.GetCamp()
 	changedDataChan <- prevCamp
 	for {

