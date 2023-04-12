@@ -19,6 +19,21 @@ type Client struct {
 	DispatcherServer string `json:"-"`
 }
 
+func (c *Client) Ping() error {
+	rq, err := http.NewRequest("GET", c.DispatcherServer+"/ping", nil)
+	if err != nil {
+		return err
+	}
+	do, err := c.Do(rq)
+	if err != nil {
+		return err
+	}
+	if do.StatusCode == http.StatusOK {
+		return nil
+	}
+	return errors.New("error in pinging")
+}
+
 func (c *Client) GetCamp() CampAPI {
 	//get request to dispatcher server /camp
 
@@ -102,8 +117,8 @@ func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) 
 				stopchan <- true
 			}
 			prevCmp = cmp
-			time.Sleep(2 * time.Second)
 		}
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
@@ -133,19 +148,4 @@ func (c *Client) Start() {
 		wg.Done()
 	}()
 	wg.Wait()
-}
-
-func (c *Client) Ping() error {
-	rq, err := http.NewRequest("GET", c.DispatcherServer+"/ping", nil)
-	if err != nil {
-		return err
-	}
-	do, err := c.Do(rq)
-	if err != nil {
-		return err
-	}
-	if do.StatusCode == http.StatusOK {
-		return nil
-	}
-	return errors.New("error in pinging")
 }

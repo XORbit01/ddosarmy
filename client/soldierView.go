@@ -192,7 +192,6 @@ func StartSoldierView(changedDataChan chan CampAPI, logChan chan string) {
 				v.addLog(log)
 				v.Render()
 			}()
-		default:
 		}
 	}
 }

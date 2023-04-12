@@ -103,7 +103,7 @@ func (l *Leader) ListenChangeView(changedDataChan chan CampAPI, logChan chan str
 			logChan <- message
 			prevCamp = camp
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
