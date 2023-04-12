@@ -202,6 +202,7 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 
 						err := l.UpdateCampSettings(CampSettings{Status: "attacking"})
 						if err != nil {
+							logChan <- "you don't have permission"
 							return
 						}
 						cmp := l.GetCamp()
@@ -211,6 +212,7 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 					go func() {
 						err := l.UpdateCampSettings(CampSettings{Status: "stopped"})
 						if err != nil {
+							logChan <- "you don't have permission"
 							return
 						}
 						cmp := l.GetCamp()
@@ -223,27 +225,30 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 						if prev == "ICMP" {
 							err := l.UpdateCampSettings(CampSettings{DDOSType: "SYN"})
 							if err != nil {
-								return
-							}
-							cmp := l.GetCamp()
-							changedDataChan <- cmp
-						}
-						if prev == "SYN" {
-							err := l.UpdateCampSettings(CampSettings{DDOSType: "ICMP"})
-							if err != nil {
+								logChan <- "you don't have permission"
 								return
 							}
 							cmp := l.GetCamp()
 							changedDataChan <- cmp
 							if cmp.Settings.DDOSType == "SYN" && !strings.Contains(cmp.Settings.VictimServer, ":") {
-								logChan <- "no port specified SYN\n, use port 80"
+								logChan <- "no port specified SYN\n use port 80"
 							}
+						}
+						if prev == "SYN" {
+							err := l.UpdateCampSettings(CampSettings{DDOSType: "ICMP"})
+							if err != nil {
+								logChan <- "you don't have permission"
+								return
+							}
+							cmp := l.GetCamp()
+							changedDataChan <- cmp
 						}
 					}()
 				case 4:
 					// shutdown
 					err := l.Shutdown()
 					if err != nil {
+						logChan <- "you don't have permission"
 						return
 					}
 				case 5:
