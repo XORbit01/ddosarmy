@@ -165,8 +165,6 @@ func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) 
 func (c *Client) Start() {
 	err := c.JoinCamp()
 	if err != nil {
-		//check if error contain connection refused
-		//if yes, then the dispatcher server is not running
 		if strings.Contains(err.Error(), "connection refused") {
 			color.Red("Dispatcher server is not running")
 			return
