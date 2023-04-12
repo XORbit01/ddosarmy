@@ -11,6 +11,7 @@ type Soldier struct {
 	Name        string    `json:"name"`
 	Ip          string    `json:"ip"`
 	LastRequest time.Time `json:"last_request"`
+	Speed       int       `json:"speed"`
 }
 
 const (

@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -36,6 +37,14 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 		}
 		if soldier.Name != "" {
 			soldier.LastRequest = time.Now()
+		}
+		speed := request.URL.Query().Get("speed")
+		if speed != "" {
+			soldier.Speed, err = strconv.Atoi(speed)
+			if err != nil {
+				http.Error(writer, "error getting speed", http.StatusBadRequest)
+				return
+			}
 		}
 	}
 	if request.Method == "POST" {
