@@ -63,17 +63,17 @@ func (camp CampAPI) Equals(c2 CampAPI) (yes bool, message string) {
 		message += "leader changed: " + c2.Leader.Name + "\n"
 	}
 	// check if set of soldiers is the same if not give me the difference
-	added, removed := compareMembers(camp.Soldiers, c2.Soldiers)
+	added, removed := compareMembers(c2.Soldiers, camp.Soldiers)
 	if len(added) > 0 {
 		yes = false
-		message += "soldier left: "
+		message += "soldier joined: "
 		for _, soldier := range added {
 			message += soldier.Name + "\n"
 		}
 	}
 	if len(removed) > 0 {
 		yes = false
-		message += "soldier joined: "
+		message += "soldier left: "
 		for _, soldier := range removed {
 			message += soldier.Name + "\n"
 		}
@@ -81,15 +81,15 @@ func (camp CampAPI) Equals(c2 CampAPI) (yes bool, message string) {
 
 	if camp.Settings.Status != c2.Settings.Status {
 		yes = false
-		message += "+" + c2.Settings.Status + "\n"
+		message += "+" + camp.Settings.Status + "\n"
 	}
 	if camp.Settings.VictimServer != c2.Settings.VictimServer {
 		yes = false
-		message += "victim changed: " + c2.Settings.VictimServer + "\n"
+		message += "victim changed: " + camp.Settings.VictimServer + "\n"
 	}
 	if camp.Settings.DDOSType != c2.Settings.DDOSType {
 		yes = false
-		message += "ddos type changed: " + c2.Settings.DDOSType + "\n"
+		message += "ddos type changed: " + camp.Settings.DDOSType + "\n"
 	}
 	return yes, message
 }
