@@ -17,6 +17,7 @@ type Client struct {
 	http.Client      `json:"-"`
 	Name             string `json:"name"`
 	DispatcherServer string `json:"-"`
+	Speed            int    `json:"speed"`
 }
 
 func (c *Client) Ping() error {
@@ -37,7 +38,7 @@ func (c *Client) Ping() error {
 func (c *Client) GetCamp() CampAPI {
 	//get request to dispatcher server /camp
 
-	rq, err := http.NewRequest("GET", c.DispatcherServer+"/camp", nil)
+	rq, err := http.NewRequest("GET", c.DispatcherServer+"/camp?speed=100", nil)
 	if err != nil {
 		return CampAPI{}
 	}

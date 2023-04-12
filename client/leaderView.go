@@ -3,6 +3,7 @@ package client
 import (
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -159,7 +160,7 @@ func (v *leaderView) updateDataForLeader(data CampAPI) {
 	// soldiers
 	v.Soldiers.Rows = [][]string{}
 	for _, soldier := range data.Soldiers {
-		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{soldier.Name, soldier.Ip, "10 request/s"})
+		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{soldier.Name, soldier.Ip, strconv.Itoa(soldier.Speed) + " req/sec"})
 	}
 	if len(data.Soldiers) == 0 {
 		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{"", "", ""})

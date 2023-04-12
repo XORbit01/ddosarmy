@@ -5,8 +5,9 @@ type LeaderAPI struct {
 }
 
 type SoldierAPI struct {
-	Name string `json:"name"`
-	Ip   string `json:"ip"`
+	Name  string `json:"name"`
+	Ip    string `json:"ip"`
+	Speed int    `json:"speed"`
 }
 
 type CampSettings struct {
@@ -61,6 +62,16 @@ func (camp CampAPI) Equals(c2 CampAPI) (yes bool, message string) {
 	if camp.Leader.Name != c2.Leader.Name {
 		yes = false
 		message += "leader changed: " + c2.Leader.Name + "\n"
+	}
+	//check if speed changed
+	for _, soldier := range camp.Soldiers {
+		for _, soldier2 := range c2.Soldiers {
+			if soldier.Ip == soldier2.Ip && soldier.Name == soldier2.Name {
+				if soldier.Speed != soldier2.Speed {
+					yes = false
+				}
+			}
+		}
 	}
 	// check if set of soldiers is the same if not give me the difference
 	added, removed := compareMembers(c2.Soldiers, camp.Soldiers)
