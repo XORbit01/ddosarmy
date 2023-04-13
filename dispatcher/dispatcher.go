@@ -65,15 +65,20 @@ func (c *Camp) UpdateSettings(status, victim, ddosType string) {
 }
 func (d *Dispatcher) ScanAndRemoveTimeOutSoldiers() {
 	c := &d.Cmp
-	for {
-		for i, soldier := range c.Soldiers {
-			if soldier.LastRequest.IsZero() {
-				continue
-			}
-			if time.Now().Sub(soldier.LastRequest) > time.Second*1000 {
-				c.Soldiers = append(c.Soldiers[:i], c.Soldiers[i+1:]...)
-			}
+	for i, soldier := range c.Soldiers {
+		if soldier.LastRequest.IsZero() {
+			continue
 		}
+		if time.Now().Sub(soldier.LastRequest) > time.Second*1000 {
+			c.Soldiers = append(c.Soldiers[:i], c.Soldiers[i+1:]...)
+		}
+	}
+
+}
+
+func (d *Dispatcher) Checker() {
+	for {
+		d.ScanAndRemoveTimeOutSoldiers()
 		time.Sleep(time.Second * 3)
 	}
 }

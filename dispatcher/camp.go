@@ -31,9 +31,10 @@ type CampSettings struct {
 }
 
 type Camp struct {
-	Leader   Leader       `json:"leader"`
-	Soldiers []Soldier    `json:"soldiers"`
-	Settings CampSettings `json:"camp_settings"`
+	Leader     Leader       `json:"leader"`
+	Soldiers   []Soldier    `json:"soldiers"`
+	Settings   CampSettings `json:"camp_settings"`
+	TotalSpeed int          `json:"total_speed"`
 }
 
 func (c *Camp) AddSoldier(s Soldier) {
@@ -81,4 +82,11 @@ func (c *Camp) SoldierExists(name string) bool {
 		}
 	}
 	return false
+}
+func (c *Camp) UpdateTotalSpeed() {
+	var totalSpeed int
+	for _, soldier := range c.Soldiers {
+		totalSpeed += soldier.Speed
+	}
+	c.TotalSpeed = totalSpeed
 }

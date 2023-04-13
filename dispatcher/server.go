@@ -18,7 +18,8 @@ func HandlePing(writer http.ResponseWriter, request *http.Request) {
 
 func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher) {
 	if request.Method == "GET" {
-
+		c := &d.Cmp
+		c.UpdateTotalSpeed()
 		err := json.NewEncoder(writer).Encode(d.Cmp)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
@@ -166,7 +167,8 @@ func isAuthorized(auth string, hash string) bool {
 }
 
 func Start(d *Dispatcher) {
-	go d.ScanAndRemoveTimeOutSoldiers()
+	go d.Checker()
+
 	http.HandleFunc("/camp", func(writer http.ResponseWriter, request *http.Request) {
 		HandleCamp(writer, request, d)
 	})
