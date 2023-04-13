@@ -162,6 +162,7 @@ func (v *leaderView) updateDataForLeader(data CampAPI) {
 	for _, soldier := range data.Soldiers {
 		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{soldier.Name, soldier.Ip, strconv.Itoa(soldier.Speed) + " req/sec"})
 	}
+
 	if len(data.Soldiers) == 0 {
 		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{"", "", ""})
 	}

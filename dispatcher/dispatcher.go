@@ -70,7 +70,7 @@ func (d *Dispatcher) ScanAndRemoveTimeOutSoldiers() {
 			if soldier.LastRequest.IsZero() {
 				continue
 			}
-			if time.Now().Sub(soldier.LastRequest) > time.Second*10 {
+			if time.Now().Sub(soldier.LastRequest) > time.Second*1000 {
 				c.Soldiers = append(c.Soldiers[:i], c.Soldiers[i+1:]...)
 			}
 		}

@@ -85,10 +85,11 @@ func IsValidAddr(host string) bool {
 	ip := net.ParseIP(host)
 	if ip == nil {
 		//check if its http link
-		if !strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
+		if strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
 			return false
 		}
 	}
+
 	return true
 }
 func IsValidPort(port int) bool {

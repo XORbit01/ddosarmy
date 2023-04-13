@@ -16,6 +16,27 @@ type Leader struct {
 	Password string
 }
 
+func (l *Leader) GetCamp() CampAPI {
+	rq, err := http.NewRequest("GET", l.DispatcherServer+"/camp", nil)
+	if err != nil {
+		return CampAPI{}
+	}
+	do, err := l.Do(rq)
+	defer do.Body.Close()
+
+	if err != nil {
+		var msg string
+		_ = json.NewDecoder(do.Body).Decode(&msg)
+		return CampAPI{}
+	}
+	var camp CampAPI
+	err = json.NewDecoder(do.Body).Decode(&camp)
+	if err != nil {
+		return CampAPI{}
+	}
+	return camp
+}
+
 func (l *Leader) Shutdown() error {
 	// delete request to /system
 	rq, err := http.NewRequest("DELETE", l.DispatcherServer+"/system", nil)
@@ -92,16 +113,16 @@ func (l *Leader) ListenChangeView(changedDataChan chan CampAPI, logChan chan str
 	prevCamp := l.GetCamp()
 	changedDataChan <- prevCamp
 	for {
-		camp := l.GetCamp()
-		if yes, message := camp.Equals(prevCamp); !yes {
+		cmp := l.GetCamp()
+		if yes, message := cmp.Equals(prevCamp); !yes {
 			select {
 			case <-changedDataChan:
 			default:
 			}
 
-			changedDataChan <- camp
+			changedDataChan <- cmp
 			logChan <- message
-			prevCamp = camp
+			prevCamp = cmp
 		}
 		time.Sleep(500 * time.Millisecond)
 	}

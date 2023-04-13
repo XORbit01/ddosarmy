@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"encoding/json"
 	"github.com/fatih/color"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -30,15 +31,21 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		soldier := d.Cmp.GetSoldierByIp(ip)
+		name := request.URL.Query().Get("name")
+
+		log.Println("name: ", name)
+		soldier := d.Cmp.GetSoldierByIpAndName(name, ip)
+		speed := request.URL.Query().Get("speed")
+		log.Println("soldier: ", soldier)
+		log.Println("speed: ", speed)
+
 		if soldier == nil {
-			//maybe its first request or its leader
+			//maybe its leader
 			return
 		}
 		if soldier.Name != "" {
 			soldier.LastRequest = time.Now()
 		}
-		speed := request.URL.Query().Get("speed")
 		if speed != "" {
 			soldier.Speed, err = strconv.Atoi(speed)
 			if err != nil {

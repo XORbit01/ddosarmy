@@ -64,6 +64,16 @@ func (c *Camp) GetSoldierByIp(ip string) *Soldier {
 	}
 	return nil
 }
+
+func (c *Camp) GetSoldierByIpAndName(name string, ip string) *Soldier {
+	for index, soldier := range c.Soldiers {
+		if soldier.Ip == ip && soldier.Name == name {
+			return &c.Soldiers[index]
+		}
+	}
+	return nil
+}
+
 func (c *Camp) SoldierExists(name string) bool {
 	for _, soldier := range c.Soldiers {
 		if soldier.Name == name {
