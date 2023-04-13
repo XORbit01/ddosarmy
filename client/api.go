@@ -17,9 +17,10 @@ type CampSettings struct {
 }
 
 type CampAPI struct {
-	Leader   LeaderAPI    `json:"leader"`
-	Soldiers []SoldierAPI `json:"soldiers"`
-	Settings CampSettings `json:"camp_settings"`
+	Leader     LeaderAPI    `json:"leader"`
+	Soldiers   []SoldierAPI `json:"soldiers"`
+	Settings   CampSettings `json:"camp_settings"`
+	TotalSpeed int          `json:"total_speed"`
 }
 
 func compareMembers(first []SoldierAPI, second []SoldierAPI) ([]SoldierAPI, []SoldierAPI) {
@@ -59,6 +60,9 @@ func compareMembers(first []SoldierAPI, second []SoldierAPI) ([]SoldierAPI, []So
 func (camp CampAPI) Equals(c2 CampAPI) (yes bool, message string) {
 	message = ""
 	yes = true
+	if camp.TotalSpeed != c2.TotalSpeed {
+		yes = false
+	}
 	if camp.Leader.Name != c2.Leader.Name {
 		yes = false
 		message += "leader changed: " + c2.Leader.Name + "\n"

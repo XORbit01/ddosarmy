@@ -18,7 +18,7 @@ type leaderView struct {
 	Banner      *widgets.Paragraph
 	Soldiers    *widgets.Table
 	Logs        *widgets.List
-	TotalSpeed  *widgets.Plot
+	TotalSpeed  *widgets.SparklineGroup
 }
 
 func newLeaderView() *leaderView {
@@ -90,12 +90,16 @@ func newLeaderView() *leaderView {
 	v.Logs.SelectedRowStyle = ui.NewStyle(ui.ColorBlack, ui.ColorRed)
 	v.Logs.BorderStyle.Fg = ui.ColorMagenta
 	v.Logs.TitleStyle.Fg = ui.ColorBlue
-	v.TotalSpeed = widgets.NewPlot()
+
+	sl0 := widgets.NewSparkline()
+	sl0.Data = []float64{0}
+	sl0.LineColor = ui.ColorCyan
+
+	v.TotalSpeed = widgets.NewSparklineGroup(sl0)
 	v.TotalSpeed.Title = "Total Speed"
-	v.TotalSpeed.Data = make([][]float64, 1)
-	v.TotalSpeed.Data[0] = []float64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	v.TotalSpeed.AxesColor = ui.ColorRed
-	v.TotalSpeed.LineColors[0] = ui.ColorGreen
+	v.TotalSpeed.SetRect(0, 0, 20, 10)
+	v.TotalSpeed.BorderStyle.Fg = ui.ColorMagenta
+	v.TotalSpeed.TitleStyle.Fg = ui.ColorBlue
 
 	return &v
 }
@@ -165,6 +169,17 @@ func (v *leaderView) updateDataForLeader(data CampAPI) {
 
 	if len(data.Soldiers) == 0 {
 		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{"", "", ""})
+	}
+	if data.Settings.Status == "stopped" {
+		v.TotalSpeed.Sparklines[0].Title = "0 req/sec"
+
+		v.TotalSpeed.Sparklines[0].Data = []float64{0}
+	} else {
+		if len(v.TotalSpeed.Sparklines[0].Data) >= 100 {
+			v.TotalSpeed.Sparklines[0].Data = v.TotalSpeed.Sparklines[0].Data[1:]
+		}
+		v.TotalSpeed.Sparklines[0].Title = strconv.Itoa(data.TotalSpeed) + " req/sec"
+		v.TotalSpeed.Sparklines[0].Data = append(v.TotalSpeed.Sparklines[0].Data, float64(data.TotalSpeed))
 	}
 }
 func (v *leaderView) addLog(log string) {
