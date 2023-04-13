@@ -11,11 +11,11 @@ import (
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
-	Use:   "server",
+	Use:   "camp",
 	Short: "start dispatcher server",
-	Long: color.MagentaString(`server is a command that starts the server and listens for
+	Long: color.MagentaString(`camp is a command that starts the server and listens for
 commands from the leader.
-then the soldiers will listen for commands from the server.
+then the soldiers will listen for commands from the server sent from leader.
 in other words server is teller and soldiers are listeners.`),
 
 	Run: func(cmd *cobra.Command, args []string) {
