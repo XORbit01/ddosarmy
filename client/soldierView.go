@@ -158,6 +158,12 @@ func (v *soldierView) updateDataForSoldier(data CampAPI) {
 }
 
 func (v *soldierView) addLog(log string) {
+	if log == "" {
+		return
+	}
+	if len(v.Logs.Rows) > 10 {
+		v.Logs.Rows = []string{}
+	}
 	v.Logs.Rows = append(v.Logs.Rows, log)
 }
 func StartSoldierView(changedDataChan chan CampAPI, logChan chan string) {

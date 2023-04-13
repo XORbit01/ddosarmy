@@ -67,7 +67,6 @@ func (c *Client) ICMPFlood(victim string, stopChan chan bool, logChan chan strin
 		elapsed := time.Since(start)
 		if elapsed.Seconds() > 0.5 {
 			speed := int(float64(requestCount) / elapsed.Seconds())
-			logChan <- "Speed: " + string(speed) + " p/s"
 			c.Speed = speed
 			start = time.Now()
 			requestCount = 0
@@ -143,7 +142,7 @@ func (c *Client) SYNFlood(victim string, stopChan chan bool, logChan chan string
 			}()
 		}
 		elapsed := time.Since(start)
-		if elapsed.Seconds() > 1 {
+		if elapsed.Seconds() > 0.5 {
 			speed := int(float64(requestCount) / elapsed.Seconds())
 			c.Speed = speed
 			start = time.Now()

@@ -168,7 +168,14 @@ func (v *leaderView) updateDataForLeader(data CampAPI) {
 	}
 }
 func (v *leaderView) addLog(log string) {
+	if log == "" {
+		return
+	}
+	if len(v.Logs.Rows) > 10 {
+		v.Logs.Rows = []string{}
+	}
 	v.Logs.Rows = append(v.Logs.Rows, log)
+
 }
 func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan string) {
 	v := newLeaderView()
