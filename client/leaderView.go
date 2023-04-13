@@ -3,6 +3,7 @@ package client
 import (
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -17,7 +18,7 @@ type leaderView struct {
 	Banner      *widgets.Paragraph
 	Soldiers    *widgets.Table
 	Logs        *widgets.List
-	TotalSpeed  *widgets.Plot
+	TotalSpeed  *widgets.SparklineGroup
 }
 
 func newLeaderView() *leaderView {
@@ -86,15 +87,19 @@ func newLeaderView() *leaderView {
 	v.Logs.PaddingTop = 1
 	v.Logs.PaddingLeft = 2
 	v.Logs.TextStyle = ui.NewStyle(ui.ColorRed)
-	v.Logs.SelectedRowStyle = ui.NewStyle(ui.ColorRed)
+	v.Logs.SelectedRowStyle = ui.NewStyle(ui.ColorBlack, ui.ColorRed)
 	v.Logs.BorderStyle.Fg = ui.ColorMagenta
 	v.Logs.TitleStyle.Fg = ui.ColorBlue
-	v.TotalSpeed = widgets.NewPlot()
+
+	sl0 := widgets.NewSparkline()
+	sl0.Data = []float64{0}
+	sl0.LineColor = ui.ColorCyan
+
+	v.TotalSpeed = widgets.NewSparklineGroup(sl0)
 	v.TotalSpeed.Title = "Total Speed"
-	v.TotalSpeed.Data = make([][]float64, 1)
-	v.TotalSpeed.Data[0] = []float64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	v.TotalSpeed.AxesColor = ui.ColorRed
-	v.TotalSpeed.LineColors[0] = ui.ColorGreen
+	v.TotalSpeed.SetRect(0, 0, 20, 10)
+	v.TotalSpeed.BorderStyle.Fg = ui.ColorMagenta
+	v.TotalSpeed.TitleStyle.Fg = ui.ColorBlue
 
 	return &v
 }
@@ -159,14 +164,33 @@ func (v *leaderView) updateDataForLeader(data CampAPI) {
 	// soldiers
 	v.Soldiers.Rows = [][]string{}
 	for _, soldier := range data.Soldiers {
-		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{soldier.Name, soldier.Ip, "10 request/s"})
+		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{soldier.Name, soldier.Ip, strconv.Itoa(soldier.Speed) + " req/sec"})
 	}
+
 	if len(data.Soldiers) == 0 {
 		v.Soldiers.Rows = append(v.Soldiers.Rows, []string{"", "", ""})
 	}
+	if data.Settings.Status == "stopped" {
+		v.TotalSpeed.Sparklines[0].Title = "0 req/sec"
+
+		v.TotalSpeed.Sparklines[0].Data = []float64{0}
+	} else {
+		if len(v.TotalSpeed.Sparklines[0].Data) >= 100 {
+			v.TotalSpeed.Sparklines[0].Data = v.TotalSpeed.Sparklines[0].Data[1:]
+		}
+		v.TotalSpeed.Sparklines[0].Title = strconv.Itoa(data.TotalSpeed) + " req/sec"
+		v.TotalSpeed.Sparklines[0].Data = append(v.TotalSpeed.Sparklines[0].Data, float64(data.TotalSpeed))
+	}
 }
 func (v *leaderView) addLog(log string) {
+	if log == "" {
+		return
+	}
+	if len(v.Logs.Rows) > 10 {
+		v.Logs.Rows = []string{}
+	}
 	v.Logs.Rows = append(v.Logs.Rows, log)
+
 }
 func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan string) {
 	v := newLeaderView()
@@ -194,13 +218,23 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 			case "<Down>", "j":
 				v.ControlDash.ScrollDown()
 				v.Render()
+			//if mouse scroll down
+			case "<MouseWheelDown>", "h":
+				v.Logs.ScrollDown()
+				v.Render()
+
+			case "<MouseWheelUp>", "l":
+				v.Logs.ScrollUp()
+				v.Render()
 
 			case "<Enter>", "<Space>":
 				switch v.ControlDash.SelectedRow {
 				case 0:
 					go func() {
+
 						err := l.UpdateCampSettings(CampSettings{Status: "attacking"})
 						if err != nil {
+							logChan <- "you don't have permission"
 							return
 						}
 						cmp := l.GetCamp()
@@ -210,6 +244,7 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 					go func() {
 						err := l.UpdateCampSettings(CampSettings{Status: "stopped"})
 						if err != nil {
+							logChan <- "you don't have permission"
 							return
 						}
 						cmp := l.GetCamp()
@@ -222,21 +257,32 @@ func (l *Leader) StartLeaderView(changedDataChan chan CampAPI, logChan chan stri
 						if prev == "ICMP" {
 							err := l.UpdateCampSettings(CampSettings{DDOSType: "SYN"})
 							if err != nil {
+								logChan <- "you don't have permission"
 								return
 							}
 							cmp := l.GetCamp()
 							changedDataChan <- cmp
-
+							if cmp.Settings.DDOSType == "SYN" && !strings.Contains(cmp.Settings.VictimServer, ":") {
+								logChan <- "no port specified SYN\n use port 80"
+							}
 						}
 						if prev == "SYN" {
 							err := l.UpdateCampSettings(CampSettings{DDOSType: "ICMP"})
 							if err != nil {
+								logChan <- "you don't have permission"
 								return
 							}
 							cmp := l.GetCamp()
 							changedDataChan <- cmp
 						}
 					}()
+				case 4:
+					// shutdown
+					err := l.Shutdown()
+					if err != nil {
+						logChan <- "you don't have permission"
+						return
+					}
 				case 5:
 					return
 				}

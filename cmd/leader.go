@@ -22,8 +22,8 @@ var leaderCmd = &cobra.Command{
 			color.Red("error getting host")
 			return
 		}
-		if !IsValidAddr(connect) {
-			fmt.Println("invalid host format, please use ip address")
+		if connect == "" {
+			color.Red("please specify a server to connect using --connect flag or -c")
 			return
 		}
 		if !strings.Contains(connect, ":") {

@@ -5,14 +5,50 @@ import (
 	"github.com/fatih/color"
 	"net"
 	"net/http"
+	"os"
+	"strconv"
+	"time"
 )
+
+func HandlePing(writer http.ResponseWriter, request *http.Request) {
+	if request.Method == "GET" {
+		_, _ = writer.Write([]byte("pong"))
+	}
+}
 
 func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher) {
 	if request.Method == "GET" {
+		c := &d.Cmp
+		c.UpdateTotalSpeed()
 		err := json.NewEncoder(writer).Encode(d.Cmp)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
+		}
+		//update soldier last request
+		ip, _, err := net.SplitHostPort(request.RemoteAddr)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+		name := request.URL.Query().Get("name")
+
+		soldier := d.Cmp.GetSoldierByIpAndName(name, ip)
+		speed := request.URL.Query().Get("speed")
+
+		if soldier == nil {
+			//maybe its leader
+			return
+		}
+		if soldier.Name != "" {
+			soldier.LastRequest = time.Now()
+		}
+		if speed != "" {
+			soldier.Speed, err = strconv.Atoi(speed)
+			if err != nil {
+				http.Error(writer, "error getting speed", http.StatusBadRequest)
+				return
+			}
 		}
 	}
 	if request.Method == "POST" {
@@ -30,7 +66,6 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 			return
 		}
 
-		// request.RemoteAddr == "" that means its testing, let change it
 		if request.RemoteAddr == "" {
 			request.RemoteAddr = "127.0.0.1:8081"
 		}
@@ -111,6 +146,19 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 	}
 }
 
+func HandleSystem(writer http.ResponseWriter, request *http.Request, d *Dispatcher) {
+	//SHUTDOWN SERVER
+	if request.Method == "DELETE" {
+		auth := request.Header.Get("Authorization")
+		if isAuthorized(auth, d.Cmp.Leader.AuthenticationHash) {
+			writer.WriteHeader(http.StatusOK)
+			os.Exit(0)
+		} else {
+			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
+		}
+	}
+}
+
 func isAuthorized(auth string, hash string) bool {
 	if HashOf(auth) == hash {
 		return true
@@ -119,8 +167,16 @@ func isAuthorized(auth string, hash string) bool {
 }
 
 func Start(d *Dispatcher) {
+	go d.Checker()
+
 	http.HandleFunc("/camp", func(writer http.ResponseWriter, request *http.Request) {
 		HandleCamp(writer, request, d)
+	})
+	http.HandleFunc("/system", func(writer http.ResponseWriter, request *http.Request) {
+		HandleSystem(writer, request, d)
+	})
+	http.HandleFunc("/ping", func(writer http.ResponseWriter, request *http.Request) {
+		HandlePing(writer, request)
 	})
 	color.Green("Starting dispatcher server on %s:%s", d.ListeningAddress, d.ListeningPort)
 	err := http.ListenAndServe(d.ListeningAddress+":"+d.ListeningPort, nil)

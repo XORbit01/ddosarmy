@@ -239,3 +239,36 @@ func TestHandleCampUpdateVictimTarget(t *testing.T) {
 		t.Errorf("PUT /camp returned wrong status code: got %v want %v", status, http.StatusUnauthorized)
 	}
 }
+
+func TestHandleSystem(t *testing.T) {
+	d := NewDispatcher()
+	d.SetupDefault()
+
+	req, err := http.NewRequest("DELETE", "/server", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Add("Authorization", "password")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		HandleSystem(w, r, d)
+	})
+
+	runTest := func() {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+	}
+
+	t.Run("panic", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected HandleSystem to panic")
+			} else {
+				if r != "unexpected call to os.Exit(0) during test" {
+					t.Errorf("Expected HandleSystem to panic with 'exit' but got %v", r)
+				}
+			}
+		}()
+		runTest()
+	})
+}
