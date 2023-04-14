@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/XORbit01/DDOS-ARMY/cmd"
+	"github.com/XORbit01/ddosarmy/cmd"
 	"github.com/fatih/color"
 )
 

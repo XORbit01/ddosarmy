@@ -1,4 +1,4 @@
-module github.com/XORbit01/DDOS-ARMY
+module github.com/XORbit01/ddosarmy
 
 go 1.19
 
