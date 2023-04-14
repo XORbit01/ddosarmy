@@ -16,7 +16,7 @@ to send a lot of requests to a victim server`),
 	Example: color.MagentaString(`
 - start camp server with:
 
-	ddosarmy`) + color.CyanString(" server ") + color.MagentaString(`-v 142.251.37.46:433
+	ddosarmy`) + color.CyanString(" server ") + color.MagentaString(`-v 142.251.37.46 -p 443
 
 - make soldier join camp server with :
 
