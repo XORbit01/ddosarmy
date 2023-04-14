@@ -1,6 +1,11 @@
-![Banner Image](img/ddosarmydemo.gif)
-
 # DDOS ARMY
+## controll your army to DDoS the enemies
+![Banner Image](img/banner.jpg)
+
+
+
+# Preview
+![Banner Image](img/ddosarmydemo.gif)
 
 
 
