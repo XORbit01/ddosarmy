@@ -35,7 +35,7 @@ you can download the binary from
 ```bash
 git clone https://github.com/XORbit01/DDOS-ARMY 
 cd DDOS-ARMY
-go build -o ddos-army 
+go build -o ddosarmy 
 ```
 
 ## Usage
