@@ -27,7 +27,7 @@ I am not responsible for any misuse or damage caused by this program.
 go install github.com/XORbit01/ddosarmy@latest 
 ```
 you can download the binary from 
-[Releases](https://github.com/XORbit01/DDOS-ARMY/releases/tag/v0.0.3)
+[Releases](https://github.com/XORbit01/DDOS-ARMY/releases/tag/v0.0.5)
 
 
 ### From source
@@ -65,7 +65,7 @@ ddosarmy soldier -c <camp_ip>
 ## How it works
 as you can see in the image below, the leader node is responsible for sending the attack commands to the soldiers.
 the dispatcher (camp) is responsible for sending the attack commands to the soldiers.
-he is not responsible for sending the single packets to the victim ip address.
+he is not responsible for sending a single packet to the victim ip address.
 
 ![How it works](img/howitworks.jpg)
 
