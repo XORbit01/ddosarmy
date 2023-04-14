@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/XORbit01/DDOS-ARMY/client"
+	"github.com/XORbit01/ddosarmy/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"os"

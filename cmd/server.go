@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/XORbit01/DDOS-ARMY/dispatcher"
+	"github.com/XORbit01/ddosarmy/dispatcher"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"net"
