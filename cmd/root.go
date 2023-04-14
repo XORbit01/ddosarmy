@@ -24,7 +24,7 @@ to send a lot of requests to a victim server`),
 
 - leader join camp server with:
 
-	ddosarmy `) + color.CyanString(" leader ") + color.MagentaString(` +-c 10.0.0.10:8080 -s password
+	ddosarmy `) + color.CyanString(" leader ") + color.MagentaString(` -c 10.0.0.10:8080 -s password
 `),
 }
 
