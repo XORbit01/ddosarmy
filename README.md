@@ -1,8 +1,7 @@
 # DDOS ARMY
 
 
-![](img/ddosarmydemo.gif)
-
+![Banner Image](img/ddosarmydemo.gif)
 
 ## What is DDOS ARMY?
 ddosarmy is a tool that allows
