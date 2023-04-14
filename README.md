@@ -72,3 +72,10 @@ he is not responsible for sending a single packet to the victim ip address.
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 you can also contact me on discord:`XORbit#5945`
+
+
+## Powered By Malwarize
+[![image](https://user-images.githubusercontent.com/130087473/232165094-73347c46-71dc-47c0-820a-1eb36657a8c0.png)](https://discord.gg/g9y7D3xCab)
+
+
+ 
