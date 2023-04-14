@@ -9,7 +9,7 @@ ddos-army is a tool that allows
 you to launch a DDoS attack on a IP victim address.
 with clustered other machine. 
 
-### ⚠️ DSICLAMER ⚠️:
+### ⚠️ DISCLAIMER ⚠️:
 ️ It is intended to be used for educational purposes only.
 I am not responsible for any misuse or damage caused by this program.
 ## Features
@@ -35,7 +35,7 @@ you can download the binary from
 ```bash
 git clone https://github.com/XORbit01/DDOS-ARMY 
 cd DDOS-ARMY
-go build -o ddos-army 
+go build -o ddosarmy 
 ```
 
 ## Usage
