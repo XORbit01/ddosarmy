@@ -70,7 +70,6 @@ func HandleCamp(writer http.ResponseWriter, request *http.Request, d *Dispatcher
 			request.RemoteAddr = "127.0.0.1:8081"
 		}
 
-		//set soldier ip
 		ip, _, err := net.SplitHostPort(request.RemoteAddr)
 
 		if err != nil {
