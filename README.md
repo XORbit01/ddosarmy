@@ -1,13 +1,13 @@
-# DDOS-ARMY
+# DDOS ARMY
 
 
 ![](img/ddosarmydemo.gif)
 
 
-## What is DDOS-ARMY?
-ddos-army is a tool that allows
-you to launch a DDoS attack on a IP victim address.
-with clustered other machine. 
+## What is DDOS ARMY?
+ddosarmy is a tool that allows
+you to launch a DDoS attack on IP victim address,
+with other machines synchronously.
 
 ### ⚠️ DISCLAIMER ⚠️:
 ️ It is intended to be used for educational purposes only.
@@ -20,12 +20,11 @@ I am not responsible for any misuse or damage caused by this program.
 * ⚙️ Easy Army management (stop, start, shutdown, change attack strategy, etc.)
 * ✅ Friendly terminal user interface
 * 📈 Profiling and benchmarking requests for each soldier (node)
-
 ## Installation
 
 ### binary (recommended)
 ```bash
-go install github.com/XORbit01/DDOS-ARMY@latest 
+go install github.com/XORbit01/ddosarmy@latest 
 ```
 you can download the binary from 
 [Releases](https://github.com/XORbit01/DDOS-ARMY/releases/tag/v0.0.3)
@@ -34,7 +33,7 @@ you can download the binary from
 ### From source
 ```bash
 git clone https://github.com/XORbit01/DDOS-ARMY 
-cd DDOS-ARMY
+cd ddosarmy
 go build -o ddosarmy 
 ```
 
@@ -74,4 +73,3 @@ he is not responsible for sending the single packets to the victim ip address.
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 you can also contact me on discord:`XORbit#5945`
-
