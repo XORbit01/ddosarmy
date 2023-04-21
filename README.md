@@ -26,12 +26,12 @@ I am not responsible for any misuse or damage caused by this program.
 go install github.com/XORbit01/ddosarmy@latest 
 ```
 you can download the binary from 
-[Releases](https://github.com/XORbit01/DDOS-ARMY/releases/tag/v0.0.5)
+[Releases](https://github.com/XORbit01/ddosarmy/releases/latest)
 
 
 ### From source
 ```bash
-git clone https://github.com/XORbit01/DDOS-ARMY 
+git clone github.com/XORbit01/ddosarmy
 cd ddosarmy
 go build -o ddosarmy 
 ```
